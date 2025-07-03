@@ -2,7 +2,13 @@ import { extension_helper } from "./helper";
 import { initExtension } from "./extension";
 import { initTopbarIcon } from "./topbar-icon";
 
-function onload({ extensionAPI }: { extensionAPI: RoamExtensionAPI }) {
+declare global {
+  interface Window {
+    roamAlphaAPI: RoamAlphaAPI;
+    extensionAPI: ExtensionAPI;
+  }
+}
+function onload({ extensionAPI }: { extensionAPI: ExtensionAPI }) {
   initTopbarIcon(extensionAPI);
   initExtension();
 }

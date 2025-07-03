@@ -17,15 +17,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "importHelpers": true,
-    "experimentalDecorators": true,
+    "experimentalDecorators": true
   },
-  "include": [
-    "src",
-  ],
-  "exclude": [
-    "node_modules"
-  ],
-  "files": [
-    "node_modules/roamjs-components/types/index.d.ts"
-  ]
+  "include": ["src", "src/type.d.ts"],
+  "exclude": ["node_modules"]
 }
