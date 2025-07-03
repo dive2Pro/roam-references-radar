@@ -1,5 +1,43 @@
-.extension-template {
-    h1 {
-       background-color: #184A90; 
-    }
+.rm-block__input.rm-block__input--view {
+  position: relative;
+}
+
+.roam-keyword-radar {
+  position: absolute;
+  right: -12px;
+  top: 2px;
+}
+
+/* src/components/Popover/Popover.css */
+
+.popover-panel {
+  position: fixed; /* 使用 fixed 定位，相对于视口 */
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1100;
+
+  /* 高度由内容决定 */
+  height: auto;
+  overflow: hidden; /* 防止子元素溢出圆角 */
+
+  /* --- 核心动画 --- */
+
+  /* 1. 设置动画原点为左侧垂直居中 */
+  transform-origin: left center;
+
+  /* 2. 初始状态：水平缩放为0，透明 */
+  transform: scaleX(0);
+  opacity: 0;
+
+  /* 3. 定义过渡效果 */
+  transition:
+    transform 0.25s ease-out,
+    opacity 0.2s linear;
+}
+
+.popover-panel.open {
+  /* 4. 展开状态：恢复正常大小，不透明 */
+  transform: scaleX(1);
+  opacity: 1;
 }
