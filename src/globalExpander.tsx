@@ -76,7 +76,17 @@ export const Popover = ({
   useEffect(() => {
     const handleMouseDown = (event: MouseEvent) => {
       // 如果点击在 popover 外部，则关闭
-      if (popoverRef.current && !popoverRef.current.contains(event.target)) {
+      console.log(
+        event.target,
+        " -- click ",
+
+        (event.target as HTMLElement).closest(".roam-ref-radar-menu"),
+      );
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target) &&
+        !(event.target as HTMLElement).closest(".roam-ref-radar-menu")
+      ) {
         onClose();
       }
     };

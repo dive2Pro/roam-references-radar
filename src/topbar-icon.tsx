@@ -1,11 +1,18 @@
-import { Button, Dialog, Icon } from "@blueprintjs/core";
-import { useRef, useState } from "react";
+import {
+  Button,
+  Dialog,
+  Icon,
+  Menu,
+  Popover,
+  MenuItem,
+} from "@blueprintjs/core";
+import { useRef, useState, ReactNode } from "react";
 import ReactDom from "react-dom/client";
 import Extension from "./extension";
-import AhoCorasick from "ahocorasick";
+import { AhoCorasick } from "./AhoCorasick";
 
 import { appendToTopbar, extension_helper } from "./helper";
-import { Popover, usePopover } from "./globalExpander";
+import { Popover as GlobalPopover, usePopover } from "./globalExpander";
 
 type QueryBlock = {
   string: string;
@@ -99,13 +106,11 @@ async function takeAll() {
   data.forEach((item) => {
     const div = document.createElement("div");
     item.div.insertAdjacentElement("afterend", div);
-    div.className = "roam-keyword-radar";
+    div.className = "roam-ref-radar";
     ReactDom.createRoot(div).render(<KeywordRadar data={item} />);
   });
   extension_helper.on_uninstall(() => {
-    document
-      .querySelectorAll(".roam-keyword-radar")
-      .forEach((div) => div.remove());
+    document.querySelectorAll(".roam-ref-radar").forEach((div) => div.remove());
   });
 }
 
@@ -137,37 +142,64 @@ function KeywordRadar({
 }: {
   data: {
     block: PullBlock;
-    blockAcResult: [number, string[]][];
+    blockAcResult: {
+      keyword: string;
+      startIndex: number;
+      endIndex: number;
+    }[];
     div: HTMLElement;
   };
 }) {
-  const [isOpen, setOpen] = useState(false);
-  const divRect = data.div.getBoundingClientRect();
   const popover = usePopover();
+
+  const contents: ReactNode[] = [];
+  let startIndex = 0;
+  const blockString = data.block[":block/string"];
+  data.blockAcResult.forEach((acResultItem) => {
+    contents.push(blockString.substring(startIndex, acResultItem.startIndex));
+    startIndex = acResultItem.endIndex + 1;
+    contents.push(
+      <BlockKeyword
+        key={acResultItem.keyword}
+        keyword={acResultItem.keyword}
+      />,
+    );
+  });
+  contents.push(blockString.substring(startIndex));
+
   return (
-    // @ts-ignore
     <div>
       <Icon
         onClick={() => {
-          console.log(` open global`);
+          console.log(` open global`, data);
           popover.triggerProps.onClick(data.div);
         }}
         icon="star"
       ></Icon>
-      <Popover {...popover.popoverProps} width={200}>
-        <div className="roam-block">{data.block[":block/string"]}</div>
-      </Popover>
-      {/* <Dialog
-        // usePortal={false}
-        portalContainer={data.div.parentElement}
-        onClose={() => {
-          setOpen(false);
-        }}
-        isOpen={isOpen}
-      >
-        <div>{data.block[":block/string"]}</div>
-      </Dialog> */}
+      <GlobalPopover {...popover.popoverProps}>
+        <div className="roam-block">{contents}</div>
+      </GlobalPopover>
     </div>
+  );
+}
+
+function BlockKeyword({ keyword }: { keyword: string }) {
+  return (
+    // @ts-ignore
+    <Popover
+      interactionKind="hover"
+      autoFocus={false}
+      className="roam-ref-radar-popover"
+      content={
+        <Menu className="roam-ref-radar-menu">
+          <MenuItem text="Open in sidebar" icon="add-column-right" />
+          <MenuItem text="Open linked references" icon="add-column-right" />
+          <MenuItem text="Link" icon="new-link" />
+        </Menu>
+      }
+    >
+      <span className="block-keyword">{keyword}</span>
+    </Popover>
   );
 }
 
