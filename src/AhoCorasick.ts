@@ -20,8 +20,6 @@ export class AhoCorasick {
   private root: AhoCorasickNode;
   // 正则表达式，用于高效判断一个字符是否为英文字母
   private static readonly IS_LETTER_REGEX = /^[a-zA-Z]$/;
-  // 正则表达式，用于判断一个关键词是否完全由英文字母组成
-  private static readonly IS_WESTERN_WORD_REGEX = /^[a-zA-Z]+$/;
 
   constructor(keywords: string[]) {
     this.root = new AhoCorasickNode();
@@ -32,7 +30,6 @@ export class AhoCorasick {
     }
   }
 
-  // ... (buildTrie and buildFailureLinks methods remain unchanged)
   private buildTrie(keywords: string[]): void {
     for (const keyword of keywords) {
       let currentNode = this.root;
@@ -104,7 +101,7 @@ export class AhoCorasick {
     ];
 
     for (let i = 0; i < text.length; i++) {
-      // 步骤 1: 处理过滤块
+      // 步骤 1: 处理过滤块 (与之前相同)
       if (activeFilterEndMarker) {
         if (text.startsWith(activeFilterEndMarker, i)) {
           i += activeFilterEndMarker.length - 1;
@@ -113,7 +110,7 @@ export class AhoCorasick {
         continue;
       }
 
-      // 步骤 2: 检查是否进入新的过滤块 (带前瞻)
+      // 步骤 2: 检查是否进入新的过滤块 (与之前相同)
       let newFilterFound = false;
       for (const filter of symmetricFilters) {
         if (text.startsWith(filter.start, i)) {
@@ -138,7 +135,7 @@ export class AhoCorasick {
         }
       }
 
-      // 步骤 3: Aho-Corasick 匹配
+      // 步骤 3: Aho-Corasick 匹配 (与之前相同)
       const char = text[i];
       while (!currentNode.children.has(char) && currentNode !== this.root) {
         currentNode = currentNode.failureLink!;
@@ -147,24 +144,23 @@ export class AhoCorasick {
         currentNode = currentNode.children.get(char)!;
       }
 
-      // 步骤 4: 处理匹配结果并进行全词检查
+      // 步骤 4: 处理匹配结果并进行全词检查 (*** 已修正 ***)
       if (currentNode.output.length > 0) {
         for (const keyword of currentNode.output) {
-          // 如果不需要全词匹配，或者关键词不是西文单词，则直接添加
-          if (
-            !wholeWordOnly ||
-            !AhoCorasick.IS_WESTERN_WORD_REGEX.test(keyword)
-          ) {
+          const startIndex = i - keyword.length + 1;
+
+          // 如果不需要全词匹配，直接添加结果
+          if (!wholeWordOnly) {
             results.push({
               keyword: keyword,
-              startIndex: i - keyword.length + 1,
+              startIndex: startIndex,
               endIndex: i,
             });
-            continue;
+            continue; // 继续处理下一个可能的匹配 (例如 "hers" 中的 "he")
           }
 
           // --- 执行全词匹配检查 ---
-          const startIndex = i - keyword.length + 1;
+          // 检查匹配到的关键词前后的字符是否为单词边界
           const charBefore = text[startIndex - 1];
           const charAfter = text[i + 1];
 
@@ -182,8 +178,6 @@ export class AhoCorasick {
       }
     }
 
-    // 由于AC算法的特性，可能会产生重复或包含的匹配项，例如匹配 "hers" 时也会匹配 "he"
-    // 如果需要，可以在这里进行去重或筛选，但通常保留所有匹配项更有用。
     return results;
   }
 }

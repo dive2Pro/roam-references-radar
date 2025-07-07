@@ -136,6 +136,98 @@ const ExpandFromRight = ({
     </div>
   );
 };
+/**
+ * 关键词数据接口 (无变化)
+ */
+interface Keyword {
+  keyword: string;
+  startIndex: number;
+  endIndex: number; // 假设 endIndex 是包含的 (inclusive)
+}
+
+/**
+ * 分组后的结果接口 (新增 text 字段)
+ */
+interface GroupedResultWithText {
+  keywords: Keyword[];
+  start: number;
+  end: number;
+  text: string; // 从原始文本中截取的、代表整个分组范围的字符串
+}
+/**
+ * 辅助函数：判断两个关键词的范围是否重叠 (无变化)
+ * @param kw1 第一个关键词对象
+ * @param kw2 第二个关键词对象
+ * @returns 如果重叠则返回 true，否则返回 false
+ */
+function doRangesOverlap(kw1: Keyword, kw2: Keyword): boolean {
+  return kw1.startIndex <= kw2.endIndex && kw2.startIndex <= kw1.endIndex;
+}
+
+/**
+ * 将重叠的关键词分组，并计算每组的整体范围及其对应的文本
+ * @param keywords 关键词对象数组
+ * @param sourceText 关键词所在的原始文本
+ * @returns 包含分组信息、范围和文本的数组
+ */
+export function groupKeywordsWithText(
+  keywords: Keyword[],
+  sourceText: string,
+): GroupedResultWithText[] {
+  if (!keywords || keywords.length === 0) {
+    return [];
+  }
+
+  const result: GroupedResultWithText[] = [];
+  const visited = new Set<Keyword>();
+
+  for (const keyword of keywords) {
+    if (visited.has(keyword)) {
+      continue;
+    }
+
+    // Step 1: 使用 BFS 找到所有重叠的关键词，形成一个组
+    const currentGroup: Keyword[] = [];
+    const queue: Keyword[] = [keyword];
+    visited.add(keyword);
+
+    while (queue.length > 0) {
+      const currentKeyword = queue.shift()!;
+      currentGroup.push(currentKeyword);
+
+      for (const otherKeyword of keywords) {
+        if (
+          !visited.has(otherKeyword) &&
+          doRangesOverlap(currentKeyword, otherKeyword)
+        ) {
+          visited.add(otherKeyword);
+          queue.push(otherKeyword);
+        }
+      }
+    }
+
+    if (currentGroup.length > 0) {
+      // Step 2: 计算该组的整体 start 和 end
+      const minStart = Math.min(...currentGroup.map((k) => k.startIndex));
+      const maxEnd = Math.max(...currentGroup.map((k) => k.endIndex));
+
+      // Step 3: 根据 start 和 end 从原始文本中截取字符串
+      // String.slice(start, end) 截取的是 [start, end) 区间，不包含 end 索引
+      // 因为我们的 endIndex 是包含的，所以需要 +1
+      const text = sourceText.slice(minStart, maxEnd + 1);
+
+      // Step 4: 将包含范围和文本的结果对象添加到最终结果中
+      result.push({
+        keywords: currentGroup,
+        start: minStart,
+        end: maxEnd,
+        text: text,
+      });
+    }
+  }
+
+  return result;
+}
 
 function KeywordRadar({
   data,
@@ -155,15 +247,15 @@ function KeywordRadar({
   const contents: ReactNode[] = [];
   let startIndex = 0;
   const blockString = data.block[":block/string"];
-  data.blockAcResult.forEach((acResultItem) => {
-    contents.push(blockString.substring(startIndex, acResultItem.startIndex));
-    startIndex = acResultItem.endIndex + 1;
-    contents.push(
-      <BlockKeyword
-        key={acResultItem.keyword}
-        keyword={acResultItem.keyword}
-      />,
-    );
+  const groupKeywords = groupKeywordsWithText(
+    data.blockAcResult,
+    data.block[":block/string"],
+  );
+  // 找出重叠的
+  groupKeywords.forEach((acResultItem) => {
+    contents.push(blockString.substring(startIndex, acResultItem.start));
+    startIndex = acResultItem.end + 1;
+    contents.push(<BlockKeyword {...acResultItem} />);
   });
   contents.push(blockString.substring(startIndex));
 
@@ -183,22 +275,72 @@ function KeywordRadar({
   );
 }
 
-function BlockKeyword({ keyword }: { keyword: string }) {
+function BlockKeyword({ text, keywords }: GroupedResultWithText) {
   return (
     // @ts-ignore
     <Popover
-      interactionKind="hover"
+      // interactionKind="hover"
       autoFocus={false}
-      className="roam-ref-radar-popover"
+      popoverClassName="roam-ref-radar-popover"
       content={
         <Menu className="roam-ref-radar-menu">
-          <MenuItem text="Open in sidebar" icon="add-column-right" />
-          <MenuItem text="Open linked references" icon="add-column-right" />
-          <MenuItem text="Link" icon="new-link" />
+          {/* <MenuItem
+            text="Open in sidebar"
+            icon="add-column-right"
+            onClick={() => {
+              window.roamAlphaAPI.ui.rightSidebar.addWindow({
+                window: {
+                  type: "block",
+                  "block-uid": window.roamAlphaAPI.data.q(`
+                    [
+                      :find ?e .
+                      :where
+                        [?p :node/title "here"]
+                        [?p :block/uid ?e]
+                    ]
+                    `) as unknown as string,
+                },
+              });
+            }}
+          />
+          <MenuItem
+            text="Open linked references"
+            icon="add-column-right"
+            onClick={() => {
+              window.roamAlphaAPI.ui.rightSidebar.addWindow({
+                window: {
+                  type: "mentions",
+                  "block-uid": window.roamAlphaAPI.data.q(`
+                  [
+                    :find ?e .
+                    :where
+                      [?p :node/title "here"]
+                      [?p :block/uid ?e]
+                  ]
+                  `) as unknown as string,
+                },
+              });
+            }}
+          /> */}
+          {keywords.map((keywordItem) => {
+            return (
+              <MenuItem
+                text={`[[${keywordItem.keyword}]]`}
+                icon="new-link"
+                onClick={() => {
+                  /**
+                   * 1. 更新数据源
+                   * 2. 更新当前组件
+                   * 3. 关闭弹窗
+                   */
+                }}
+              />
+            );
+          })}
         </Menu>
       }
     >
-      <span className="block-keyword">{keyword}</span>
+      <span className="block-keyword">{text}</span>
     </Popover>
   );
 }

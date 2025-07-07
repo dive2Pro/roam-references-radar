@@ -3,6 +3,8 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
+// 鼠标或者点击或者悬浮 0.5 秒, 扩展动画会完成, 保持打开状态
+// 其他情况会关闭扩展动画
 export const usePopover = () => {
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -61,14 +63,53 @@ export const Popover = ({
   // 核心逻辑：计算位置
   useEffect(() => {
     if (anchorEl) {
+      // 同步 anchorEl 的宽度和高度变化, 观察节点在页面上的位置变化
+      const observer = new ResizeObserver(() => {
+        const rect = anchorEl.getBoundingClientRect();
+        setPosition({
+          // 定位在锚点元素的右侧
+          top: rect.y,
+          left: rect.x - 4, // 在右侧留出 8px 间距
+          width: rect.width + 2,
+        });
+      });
+      observer.observe(anchorEl);
+
+      const handleScroll = () => {
+        // const rect = anchorEl.getBoundingClientRect();
+        // setPosition({
+        //   // 定位在锚点元素的右侧
+        //   top: rect.y,
+        //   left: rect.x - 4, // 在右侧留出 8px 间距
+        //   width: rect.width + 2,
+        // });
+        onClose();
+      };
+      [".rm-article-wrapper", "#roam-right-sidebar-content"].forEach(
+        (selector) => {
+          document
+            .querySelector(selector)
+            ?.addEventListener("scroll", handleScroll);
+        },
+      );
+
       const rect = anchorEl.getBoundingClientRect();
-      console.log({ rect, anchorEl });
       setPosition({
         // 定位在锚点元素的右侧
         top: rect.y,
         left: rect.x - 4, // 在右侧留出 8px 间距
         width: rect.width + 2,
       });
+      return () => {
+        observer.disconnect();
+        [".rm-article-wrapper", "#roam-right-sidebar-content"].forEach(
+          (selector) => {
+            document
+              .querySelector(selector)
+              ?.removeEventListener("scroll", handleScroll);
+          },
+        );
+      };
     }
   }, [anchorEl, isOpen]); // 当锚点或打开状态变化时重新计算
 
@@ -76,12 +117,6 @@ export const Popover = ({
   useEffect(() => {
     const handleMouseDown = (event: MouseEvent) => {
       // 如果点击在 popover 外部，则关闭
-      console.log(
-        event.target,
-        " -- click ",
-
-        (event.target as HTMLElement).closest(".roam-ref-radar-menu"),
-      );
       if (
         popoverRef.current &&
         !popoverRef.current.contains(event.target) &&
