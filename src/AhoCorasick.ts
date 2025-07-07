@@ -20,7 +20,31 @@ export class AhoCorasick {
   private root: AhoCorasickNode;
   // 正则表达式，用于高效判断一个字符是否为英文字母
   private static readonly IS_LETTER_REGEX = /^[a-zA-Z]$/;
+  // 非对称标记：它们的存在本身就构成格式化
+  private static readonly UNPAIRED_MD_MARKERS: string[] = [
+    "#",
+    ">",
+    "```",
+    // "`",
+    "\n",
+    // "- ",
+    // "+ ",
+    // "* ", // 列表项需要后面的空格来区分
+  ];
 
+  // 对称标记：必须成对出现才算格式化
+  private static readonly PAIRED_MD_MARKERS: { start: string; end: string }[] =
+    [
+      { start: "[[", end: "]]" },
+      { start: "((", end: "))" },
+      { start: "{{", end: "}}" },
+      { start: "**", end: "**" },
+      { start: "__", end: "__" },
+      { start: "~~", end: "~~" },
+      { start: "*", end: "*" }, // 单星号斜体
+      { start: "_", end: "_" }, // 单下划线斜体
+      { start: "`", end: "`" },
+    ];
   constructor(keywords: string[]) {
     this.root = new AhoCorasickNode();
     const uniqueKeywords = [...new Set(keywords.filter((kw) => kw.length > 0))];
@@ -83,6 +107,42 @@ export class AhoCorasick {
   }
 
   /**
+   * 检查给定的前缀字符串是否包含有效的 Markdown 格式。
+   * @param prefix 要检查的字符串。
+   * @returns 如果包含格式化，则为 true。
+   */
+  private isPrefixFormatted(prefix: string): boolean {
+    // 1. 检查是否存在任何非对称标记
+    if (
+      AhoCorasick.UNPAIRED_MD_MARKERS.some((marker) => prefix.includes(marker))
+    ) {
+      return true;
+    }
+
+    // 2. 检查是否存在任何完整的、对称的标记对
+    for (const pair of AhoCorasick.PAIRED_MD_MARKERS) {
+      const startIndex = prefix.indexOf(pair.start);
+
+      // 如果找到了开始标记
+      if (startIndex !== -1) {
+        // 从开始标记之后的位置，查找结束标记
+        const endIndex = prefix.indexOf(
+          pair.end,
+          startIndex + pair.start.length,
+        );
+
+        // 如果也找到了结束标记，那么就确认存在格式化
+        if (endIndex !== -1) {
+          return true;
+        }
+      }
+    }
+
+    // 如果所有检查都未通过，则认为不包含格式化
+    return false;
+  }
+
+  /**
    * 在文本中搜索关键词，支持过滤和全词匹配。
    * @param text 要搜索的文本。
    * @param wholeWordOnly 如果为 true，则只匹配完整的西文单词。默认为 true。
@@ -92,7 +152,30 @@ export class AhoCorasick {
     const results: Match[] = [];
     let currentNode = this.root;
     let activeFilterEndMarker: string | null = null;
+    let loopStartIndex = 0;
 
+    // *** 新的、更精确的 Markdown 标记列表 ***
+    // 这些是明确表示格式化开始的字符串
+    const MD_FORMAT_MARKERS: string[] = [
+      "[[",
+      "((",
+      "{{", // 双括号
+      "**",
+      "__",
+      "~~", // 强调/删除线
+      "```",
+      "`", // 代码
+      "#",
+      ">", // 标题/引用
+      "![", // 图片
+      // "\n", // 换行符本身也是格式化
+      // "- ",
+      // "+ ",
+      // "* ", // 列表项 (注意后面的空格)
+    ];
+
+    const IS_WHITESPACE_REGEX = /\s/;
+    const IS_VALID_TAG_CHAR_REGEX = /[a-zA-Z0-9\p{Script=Han}._-]/u;
     const symmetricFilters = [
       { start: "[[", end: "]]" },
       { start: "((", end: "))" },
@@ -100,8 +183,24 @@ export class AhoCorasick {
       { start: "```", end: "```" },
     ];
 
-    for (let i = 0; i < text.length; i++) {
-      // 步骤 1: 处理过滤块 (与之前相同)
+    // *** 步骤 0: 更新后的前缀-`::` 过滤器 ***
+    const firstColonIndex = text.indexOf("::");
+    if (firstColonIndex !== -1) {
+      const prefix = text.substring(0, firstColonIndex);
+      // 检查前缀中是否包含任何一个明确的 Markdown 标记
+      const hasFormatting = MD_FORMAT_MARKERS.some((marker) =>
+        prefix.includes(marker),
+      );
+
+      // 如果不包含任何标记 (是纯文本)，则跳过这部分
+      if (!hasFormatting) {
+        loopStartIndex = firstColonIndex + 2;
+      }
+    }
+
+    // 主循环及后续所有逻辑保持不变...
+    for (let i = loopStartIndex; i < text.length; i++) {
+      // 步骤 1 & 2: 处理常规过滤块
       if (activeFilterEndMarker) {
         if (text.startsWith(activeFilterEndMarker, i)) {
           i += activeFilterEndMarker.length - 1;
@@ -110,7 +209,6 @@ export class AhoCorasick {
         continue;
       }
 
-      // 步骤 2: 检查是否进入新的过滤块 (与之前相同)
       let newFilterFound = false;
       for (const filter of symmetricFilters) {
         if (text.startsWith(filter.start, i)) {
@@ -135,7 +233,25 @@ export class AhoCorasick {
         }
       }
 
-      // 步骤 3: Aho-Corasick 匹配 (与之前相同)
+      // 步骤 2.5: 检查并跳过由特定字符组成的标签
+      if (text[i] === "#") {
+        const charBefore = text[i - 1];
+        if (charBefore === undefined || IS_WHITESPACE_REGEX.test(charBefore)) {
+          let tagEndIndex = i + 1;
+          while (
+            tagEndIndex < text.length &&
+            IS_VALID_TAG_CHAR_REGEX.test(text[tagEndIndex])
+          ) {
+            tagEndIndex++;
+          }
+          if (tagEndIndex > i + 1) {
+            i = tagEndIndex - 1;
+            continue;
+          }
+        }
+      }
+
+      // 步骤 3 & 4: AC 匹配和结果处理
       const char = text[i];
       while (!currentNode.children.has(char) && currentNode !== this.root) {
         currentNode = currentNode.failureLink!;
@@ -144,23 +260,15 @@ export class AhoCorasick {
         currentNode = currentNode.children.get(char)!;
       }
 
-      // 步骤 4: 处理匹配结果并进行全词检查 (*** 已修正 ***)
       if (currentNode.output.length > 0) {
         for (const keyword of currentNode.output) {
           const startIndex = i - keyword.length + 1;
 
-          // 如果不需要全词匹配，直接添加结果
           if (!wholeWordOnly) {
-            results.push({
-              keyword: keyword,
-              startIndex: startIndex,
-              endIndex: i,
-            });
-            continue; // 继续处理下一个可能的匹配 (例如 "hers" 中的 "he")
+            results.push({ keyword, startIndex, endIndex: i });
+            continue;
           }
 
-          // --- 执行全词匹配检查 ---
-          // 检查匹配到的关键词前后的字符是否为单词边界
           const charBefore = text[startIndex - 1];
           const charAfter = text[i + 1];
 
@@ -168,11 +276,7 @@ export class AhoCorasick {
             this.isWordBoundary(charBefore) &&
             this.isWordBoundary(charAfter)
           ) {
-            results.push({
-              keyword: keyword,
-              startIndex: startIndex,
-              endIndex: i,
-            });
+            results.push({ keyword, startIndex, endIndex: i });
           }
         }
       }

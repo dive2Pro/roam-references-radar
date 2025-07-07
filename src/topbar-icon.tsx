@@ -1,14 +1,6 @@
-import {
-  Button,
-  Dialog,
-  Icon,
-  Menu,
-  Popover,
-  MenuItem,
-} from "@blueprintjs/core";
-import { useRef, useState, ReactNode } from "react";
-import ReactDom from "react-dom/client";
-import Extension from "./extension";
+import { Button, Icon, Menu, Popover, MenuItem } from "@blueprintjs/core";
+import { ReactNode } from "react";
+import ReactDom from "react-dom";
 import { AhoCorasick } from "./AhoCorasick";
 
 import { appendToTopbar, extension_helper } from "./helper";
@@ -32,21 +24,25 @@ type QueryBlock = {
   "edit-time": number;
 };
 
-const getData = async () => {
-  console.time("DO");
+const newAhoCorasick = async () => {
   const allPages = (
     (await window.roamAlphaAPI.data.async.fast.q(`
-    [
-      :find (pull ?page [:block/uid :node/title])
-      :where
-        [?page :node/title ]
+      [
+        :find (pull ?page [:block/uid :node/title])
+        :where
+          [?page :node/title ]
 
-    ]
-    `)) as { ":block/uid": string; ":node/title": string }[][]
+      ]
+      `)) as { ":block/uid": string; ":node/title": string }[][]
   )
     .map((item) => item[0])
     .filter((page) => page[":node/title"].length > 2);
   const ac = new AhoCorasick(allPages.map((page) => page[":node/title"]));
+  return ac;
+};
+
+const getData = async () => {
+  console.time("DO");
 
   const getBlocksWithElements = () => {
     const allDiv = [...document.querySelectorAll(`div[id^=block-input]`)];
@@ -77,6 +73,8 @@ const getData = async () => {
   };
   const allBlocks = await getAllBlocks();
 
+  const ac = await newAhoCorasick();
+
   const result = allBlocks
     .filter((block) => block?.[":block/string"])
     .map((block, index) => {
@@ -100,42 +98,8 @@ const getData = async () => {
   return result;
 };
 
-async function takeAll() {
-  const data = await getData();
-  // TODO: 给每一个 block 都添加一个蒙层, 针对探寻出的 page,  鼠标移动上去的时候有一个弹出效果
-  data.forEach((item) => {
-    const div = document.createElement("div");
-    item.div.insertAdjacentElement("afterend", div);
-    div.className = "roam-ref-radar";
-    ReactDom.createRoot(div).render(<KeywordRadar data={item} />);
-  });
-  extension_helper.on_uninstall(() => {
-    document.querySelectorAll(".roam-ref-radar").forEach((div) => div.remove());
-  });
-}
+// 页面上有变化的时候呢?
 
-const ExpandFromRight = ({
-  children,
-  isOpen,
-  onToggle,
-}: {
-  children: any;
-  isOpen: boolean;
-  onToggle: () => void;
-}) => {
-  const contentRef = useRef(null);
-
-  return (
-    <div className="expand-container">
-      <div
-        ref={contentRef}
-        className={`expand-content ${isOpen ? "expanded" : "collapsed"}`}
-      >
-        {children}
-      </div>
-    </div>
-  );
-};
 /**
  * 关键词数据接口 (无变化)
  */
@@ -345,13 +309,192 @@ function BlockKeyword({ text, keywords }: GroupedResultWithText) {
   );
 }
 
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  return function (...args: Parameters<T>): void {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
+    timeoutId = setTimeout(() => {
+      func.apply(null, args);
+      timeoutId = null;
+    }, wait);
+  };
+}
+
+const domSet = new WeakSet<Element>();
+
+const triggerModifyDom = debounce(async () => {
+  const getBlocksWithElements = () => {
+    const allDiv = [...document.querySelectorAll(`div[id^=block-input]`)];
+
+    const elementUidMap = allDiv
+      .filter((queryDiv) => {
+        return domSet.has(queryDiv);
+      })
+      .reduce(
+        (p, div) => {
+          const uid = div.id.substring(
+            div.id.lastIndexOf("-", div.id.length - 10) + 1,
+          );
+          p[uid] = {
+            uid,
+            div: div as HTMLElement,
+          };
+          return p;
+        },
+        {} as Record<string, { uid: string; div: HTMLElement }>,
+      );
+    return elementUidMap;
+  };
+  const elementUidMap = getBlocksWithElements();
+  const getAllBlocks = async () => {
+    const uids = Object.keys(elementUidMap);
+    const blocks = await window.roamAlphaAPI.data.async.pull_many(
+      "[:block/string :block/uid]",
+      uids.map((uid) => [":block/uid", uid]),
+    );
+    return blocks;
+  };
+  const allBlocks = await getAllBlocks();
+
+  const ac = await newAhoCorasick();
+
+  const result = allBlocks
+    .filter((block) => block?.[":block/string"])
+    .map((block, index) => {
+      if (!block) {
+        console.log({ block, index }, allBlocks);
+        throw new Error("Block is undefined");
+      }
+
+      const blockAcResult = ac.search(block[":block/string"]);
+      return {
+        block,
+        blockAcResult,
+        ...elementUidMap[block[":block/uid"]],
+      };
+    })
+    .filter((block) => block.blockAcResult.length);
+
+  result.forEach((item) => {
+    let el = item.div.parentElement.querySelector(".roam-ref-radar");
+    if (el) {
+      ReactDom.render(<KeywordRadar data={item} />, el);
+    } else {
+      const div = document.createElement("div");
+      item.div.insertAdjacentElement("afterend", div);
+      div.className = "roam-ref-radar";
+      ReactDom.render(<KeywordRadar data={item} />, div);
+    }
+  });
+  console.log(elementUidMap, " ---- right ?");
+}, 500);
+
+extension_helper.on_uninstall(() => {
+  document.querySelectorAll(".roam-ref-radar").forEach((div) => div.remove());
+});
+
+function init() {
+  // --- 步骤 1: 设置 IntersectionObserver ---
+  // 这个 Observer 将被用来观察所有动态添加的卡片
+  const intersectionCallback: IntersectionObserverCallback = (entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        // entry.target.classList.add("is-visible");
+        domSet.add(entry.target);
+      } else {
+        // 可选：如果元素离开视口需要恢复状态，可以在这里处理
+        // console.log("❌ 元素离开视口:", entry.target);
+        // entry.target.classList.remove('is-visible');
+        domSet.delete(entry.target);
+      }
+    });
+    triggerModifyDom();
+  };
+
+  // 创建一个全局的 IntersectionObserver 实例
+  const intersectionObserver = new IntersectionObserver(intersectionCallback, {
+    threshold: 0.1, // 元素可见 10% 时触发
+  });
+
+  const allDiv = [...document.querySelectorAll(`div[id^=block-input]`)];
+  allDiv.forEach((div) => {
+    intersectionObserver.observe(div);
+  });
+  // --- 步骤 2: 设置 MutationObserver ---
+  // 这个 Observer 监视容器的子元素变化
+  const container = document.querySelector(".roam-app");
+
+  const mutationCallback: MutationCallback = (mutationsList, observer) => {
+    for (const mutation of mutationsList) {
+      if (mutation.type === "childList") {
+        // --- 处理新增的节点 ---
+        mutation.addedNodes.forEach((_node) => {
+          const node = _node as Element;
+          // 我们只关心元素节点
+          if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+          // 检查被添加的节点本身是否是目标卡片
+          if (node.matches("div[id^=block-input]")) {
+            console.log("➕ 检测到直接卡片, 开始观察:", node);
+            intersectionObserver.observe(node);
+          }
+
+          // 检查被添加的节点内部是否包含目标卡片 (处理嵌套情况)
+          const nestedCards = node.querySelectorAll("div[id^=block-input]");
+          nestedCards.forEach((card) => {
+            console.log("➕ 检测到嵌套卡片, 开始观察:", card);
+            intersectionObserver.observe(card);
+          });
+        });
+
+        // --- 处理移除的节点 ---
+        mutation.removedNodes.forEach((_node) => {
+          const node = _node as Element;
+          if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+          if (node.matches("div[id^=block-input]")) {
+            console.log("➖ 移除直接 block-input, 停止观察:", node);
+            intersectionObserver.unobserve(node);
+          }
+
+          const nestedCards = node.querySelectorAll("div[id^=block-input]");
+          nestedCards.forEach((card) => {
+            console.log("➖ 移除嵌套block-input, 停止观察:", card);
+            intersectionObserver.unobserve(card);
+          });
+        });
+      }
+    }
+  };
+
+  // 创建 MutationObserver 实例
+  const mutationObserver = new MutationObserver(mutationCallback);
+
+  // 配置 MutationObserver
+  const config = {
+    childList: true, // 监视子节点的添加或删除
+    subtree: true, // 如果子节点内部还有变化需要监听，则设为 true
+  };
+
+  // 开始监视目标容器
+  mutationObserver.observe(container, config);
+}
+
 function TopbarIcon() {
   return (
     <>
       <Button
         icon="add"
         onClick={() => {
-          takeAll();
+          // takeAll();
+          init();
         }}
       />
     </>
@@ -360,7 +503,7 @@ function TopbarIcon() {
 
 export function initTopbarIcon(extensionAPI: ExtensionAPI) {
   const topbarIcon = appendToTopbar("Extension-Name");
-  ReactDom.createRoot(topbarIcon).render(<TopbarIcon />);
+  ReactDom.render(<TopbarIcon />, topbarIcon);
   extension_helper.on_uninstall(() => {
     topbarIcon.parentElement.removeChild(topbarIcon);
   });
