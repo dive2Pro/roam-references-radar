@@ -366,13 +366,13 @@ const triggerModifyDom = debounce(async () => {
   const ac = await newAhoCorasick();
 
   const result = allBlocks
-    .filter((block) => block?.[":block/string"])
-    .map((block, index) => {
-      if (!block) {
-        console.log({ block, index }, allBlocks);
-        throw new Error("Block is undefined");
-      }
-
+    .filter((block) => {
+      console.log({ block });
+      const div = elementUidMap[block[":block/uid"]].div;
+      div.parentElement.querySelector(".roam-ref-radar")?.remove();
+      return block?.[":block/string"];
+    })
+    .map((block) => {
       const blockAcResult = ac.search(block[":block/string"]);
       return {
         block,
