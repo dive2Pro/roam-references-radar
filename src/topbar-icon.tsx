@@ -1,29 +1,12 @@
 import { Button, Icon, Menu, Popover, MenuItem } from "@blueprintjs/core";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import ReactDom from "react-dom";
 import { AhoCorasick } from "./AhoCorasick";
 
 import { appendToTopbar, extension_helper } from "./helper";
 import { Popover as GlobalPopover, usePopover } from "./globalExpander";
 
-type QueryBlock = {
-  string: string;
-  uid: string;
-  title: string;
-  parents: QueryBlock[];
-  page: {
-    title: string;
-    uid: string;
-    time: string;
-  };
-  refs: {
-    title: string;
-  }[];
-  children: QueryBlock[];
-  "create-time": number;
-  "edit-time": number;
-};
-
+let AC: AhoCorasick;
 const newAhoCorasick = async () => {
   const allPages = (
     (await window.roamAlphaAPI.data.async.fast.q(`
@@ -38,64 +21,8 @@ const newAhoCorasick = async () => {
     .map((item) => item[0])
     .filter((page) => page[":node/title"].length > 2);
   const ac = new AhoCorasick(allPages.map((page) => page[":node/title"]));
+  AC = ac;
   return ac;
-};
-
-const getData = async () => {
-  console.time("DO");
-
-  const getBlocksWithElements = () => {
-    const allDiv = [...document.querySelectorAll(`div[id^=block-input]`)];
-
-    const elementUidMap = allDiv.reduce(
-      (p, div) => {
-        const uid = div.id.substring(
-          div.id.lastIndexOf("-", div.id.length - 10) + 1,
-        );
-        p[uid] = {
-          uid,
-          div: div as HTMLElement,
-        };
-        return p;
-      },
-      {} as Record<string, { uid: string; div: HTMLElement }>,
-    );
-    return elementUidMap;
-  };
-  const elementUidMap = getBlocksWithElements();
-  const getAllBlocks = async () => {
-    const uids = Object.keys(elementUidMap);
-    const blocks = await window.roamAlphaAPI.data.async.pull_many(
-      "[:block/string :block/uid]",
-      uids.map((uid) => [":block/uid", uid]),
-    );
-    return blocks;
-  };
-  const allBlocks = await getAllBlocks();
-
-  const ac = await newAhoCorasick();
-
-  const result = allBlocks
-    .filter((block) => block?.[":block/string"])
-    .map((block, index) => {
-      if (!block) {
-        console.log({ block, index }, allBlocks);
-        throw new Error("Block is undefined");
-      }
-
-      const blockAcResult = ac.search(block[":block/string"]);
-      return {
-        block,
-        blockAcResult,
-        ...elementUidMap[block[":block/uid"]],
-      };
-    })
-    .filter((block) => block.blockAcResult.length);
-  console.timeEnd("DO");
-
-  console.log({ result });
-
-  return result;
 };
 
 // 页面上有变化的时候呢?
@@ -207,22 +134,33 @@ function KeywordRadar({
   };
 }) {
   const popover = usePopover();
-
+  const [blockString, setBlockString] = useState(data.block[":block/string"]);
+  const [blockAcResult, setBlockAcResult] = useState(data.blockAcResult);
   const contents: ReactNode[] = [];
   let startIndex = 0;
-  const blockString = data.block[":block/string"];
-  const groupKeywords = groupKeywordsWithText(
-    data.blockAcResult,
-    data.block[":block/string"],
-  );
+  // const blockString = data.block[":block/string"];
+  const groupKeywords = groupKeywordsWithText(blockAcResult, blockString);
   // 找出重叠的
   groupKeywords.forEach((acResultItem) => {
     contents.push(blockString.substring(startIndex, acResultItem.start));
     startIndex = acResultItem.end + 1;
-    contents.push(<BlockKeyword {...acResultItem} />);
+    contents.push(
+      <BlockKeyword
+        data={acResultItem}
+        key={`${acResultItem.start}-${acResultItem.end}-${acResultItem.text}`}
+        blockString={blockString}
+        uid={data.block[":block/uid"]}
+        onChange={(text) => {
+          setBlockString(text);
+          console.log({ acResultItem }, text);
+          setBlockAcResult(AC.search(text));
+          // triggerModifyDom();
+        }}
+      />,
+    );
   });
   contents.push(blockString.substring(startIndex));
-
+  console.log({ groupKeywords, blockString, contents }, " ____");
   return (
     <div>
       <Icon
@@ -232,14 +170,30 @@ function KeywordRadar({
         }}
         icon="star"
       ></Icon>
-      <GlobalPopover {...popover.popoverProps}>
+      <GlobalPopover
+        {...popover.popoverProps}
+        onClose={() => {
+          popover.popoverProps.onClose();
+          triggerModifyDom();
+        }}
+      >
         <div className="roam-block">{contents}</div>
       </GlobalPopover>
     </div>
   );
 }
 
-function BlockKeyword({ text, keywords }: GroupedResultWithText) {
+function BlockKeyword({
+  data,
+  uid,
+  blockString,
+  onChange,
+}: {
+  uid: string;
+  data: GroupedResultWithText;
+  blockString: string;
+  onChange: (v: string) => void;
+}) {
   return (
     // @ts-ignore
     <Popover
@@ -286,7 +240,7 @@ function BlockKeyword({ text, keywords }: GroupedResultWithText) {
               });
             }}
           /> */}
-          {keywords.map((keywordItem) => {
+          {data.keywords.map((keywordItem) => {
             return (
               <MenuItem
                 text={`[[${keywordItem.keyword}]]`}
@@ -297,6 +251,17 @@ function BlockKeyword({ text, keywords }: GroupedResultWithText) {
                    * 2. 更新当前组件
                    * 3. 关闭弹窗
                    */
+                  const newBlockString =
+                    blockString.substring(0, keywordItem.startIndex) +
+                    `[[${keywordItem.keyword}]]` +
+                    blockString.substring(keywordItem.endIndex + 1);
+                  window.roamAlphaAPI.data.block.update({
+                    block: {
+                      uid: uid,
+                      string: newBlockString,
+                    },
+                  });
+                  onChange(newBlockString);
                 }}
               />
             );
@@ -304,7 +269,7 @@ function BlockKeyword({ text, keywords }: GroupedResultWithText) {
         </Menu>
       }
     >
-      <span className="block-keyword">{text}</span>
+      <span className="block-keyword">{data.text}</span>
     </Popover>
   );
 }
@@ -384,6 +349,7 @@ const triggerModifyDom = debounce(async () => {
 
   result.forEach((item) => {
     let el = item.div.parentElement.querySelector(".roam-ref-radar");
+    console.log({ el, item });
     if (el) {
       ReactDom.render(<KeywordRadar data={item} />, el);
     } else {
@@ -393,7 +359,7 @@ const triggerModifyDom = debounce(async () => {
       ReactDom.render(<KeywordRadar data={item} />, div);
     }
   });
-  console.log(elementUidMap, " ---- right ?");
+  console.log({ result }, " ---- right ?");
 }, 500);
 
 extension_helper.on_uninstall(() => {
