@@ -1,16 +1,27 @@
 // src/components/Popover/Popover.js
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
+import {
+  CollapsibleAnimator,
+  createTopRightWaveAnimation,
+  createWaveAnimation,
+} from "./Wave";
 
 // 鼠标或者点击或者悬浮 0.5 秒, 扩展动画会完成, 保持打开状态
 // 其他情况会关闭扩展动画
 export const usePopover = () => {
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const open = useCallback((target: HTMLElement) => {
     // event.currentTarget 是绑定了事件的元素
-    setAnchorEl(target);
+    setAnchorEl((prev) => {
+      if (prev === target) {
+        return null;
+      }
+      return target;
+    });
   }, []);
 
   const close = useCallback(() => {
@@ -18,7 +29,7 @@ export const usePopover = () => {
   }, []);
 
   const isOpen = Boolean(anchorEl);
-
+  console.log({ isOpen });
   return {
     isOpen,
     open,
@@ -53,13 +64,13 @@ export const Popover = ({
 }: {
   isOpen: boolean;
   anchorEl: HTMLElement | null;
-  onClose: () => void;
+  onClose: (target?: Element) => void;
   children: React.ReactNode;
   width?: number;
 }) => {
   const popoverRef = useRef(null);
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
-
+  const [closed, setClosed] = useState(false);
   // 核心逻辑：计算位置
   useEffect(() => {
     if (anchorEl) {
@@ -121,8 +132,10 @@ export const Popover = ({
         popoverRef.current &&
         !popoverRef.current.contains(event.target) &&
         !(event.target as HTMLElement).closest(".roam-ref-radar-menu")
+        // &&
+        // !(event.target as HTMLElement).closest(".roam-ref-radar")
       ) {
-        onClose();
+        onClose(event.target as HTMLElement);
       }
     };
 
@@ -143,11 +156,7 @@ export const Popover = ({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) {
-    return null;
-  }
-
-  return createPortal(
+  return (
     <div
       ref={popoverRef}
       className={`popover-panel ${isOpen ? "open" : ""}`}
@@ -155,8 +164,26 @@ export const Popover = ({
         ...position,
       }}
     >
-      {children}
-    </div>,
-    popoverRoot,
+      <CollapsibleAnimator
+        isOpen={isOpen}
+        onClose={() => {
+          onClose();
+          setClosed(true);
+        }}
+        animationStrategy={createTopRightWaveAnimation({
+          isOpen,
+          easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+          duration: 500,
+        })}
+        // onClose={function (): void {
+        //   // throw new Error("Function not implemented.");
+        //   onClose();
+        // }}
+        // {...position}
+      >
+        {children}
+      </CollapsibleAnimator>
+    </div>
+    // popoverRoot,
   );
 };

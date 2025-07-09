@@ -1,10 +1,11 @@
 import { Button, Icon, Menu, Popover, MenuItem } from "@blueprintjs/core";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import ReactDom from "react-dom";
 import { AhoCorasick } from "./AhoCorasick";
 
 import { appendToTopbar, extension_helper } from "./helper";
 import { Popover as GlobalPopover, usePopover } from "./globalExpander";
+import { debounce } from "./utils";
 
 let AC: AhoCorasick;
 const newAhoCorasick = async () => {
@@ -122,7 +123,9 @@ export function groupKeywordsWithText(
 
 function KeywordRadar({
   data,
+  uninstall,
 }: {
+  uninstall: () => void;
   data: {
     block: PullBlock;
     blockAcResult: {
@@ -161,20 +164,41 @@ function KeywordRadar({
   });
   contents.push(blockString.substring(startIndex));
   console.log({ groupKeywords, blockString, contents }, " ____");
+  useEffect(() => {}, [blockAcResult]);
+  if (!blockAcResult.length) {
+    uninstall();
+    return null;
+  }
   return (
     <div>
       <Icon
-        onClick={() => {
-          console.log(` open global`, data);
+        onClickCapture={(e) => {
+          console.log(` open global`, data, popover);
           popover.triggerProps.onClick(data.div);
+          e.preventDefault();
+          e.stopPropagation();
         }}
         icon="star"
       ></Icon>
       <GlobalPopover
         {...popover.popoverProps}
-        onClose={() => {
+        onClose={(target) => {
+          console.log(
+            `---`,
+            target?.closest(`div[id^=block-input]`),
+            data.div.id,
+          );
+          if (
+            target &&
+            target
+              .closest(`.rm-block-main`)
+              ?.querySelector(`div[id^=block-input]`) === data.div
+          ) {
+            console.log(`-----------------`);
+            return;
+          }
           popover.popoverProps.onClose();
-          triggerModifyDom();
+          // triggerModifyDom();
         }}
       >
         <div className="roam-block">{contents}</div>
@@ -274,24 +298,6 @@ function BlockKeyword({
   );
 }
 
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number,
-): (...args: Parameters<T>) => void {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-  return function (...args: Parameters<T>): void {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-
-    timeoutId = setTimeout(() => {
-      func.apply(null, args);
-      timeoutId = null;
-    }, wait);
-  };
-}
-
 const domSet = new WeakSet<Element>();
 
 const triggerModifyDom = debounce(async () => {
@@ -330,11 +336,17 @@ const triggerModifyDom = debounce(async () => {
 
   const ac = await newAhoCorasick();
 
+  console.log({ allBlocks });
+
   const result = allBlocks
     .filter((block) => {
       console.log({ block });
       const div = elementUidMap[block[":block/uid"]].div;
-      div.parentElement.querySelector(".roam-ref-radar")?.remove();
+      const el = div.parentElement.querySelector(".roam-ref-radar");
+      if (el) {
+        ReactDom.unmountComponentAtNode(el);
+        // el.remove();
+      }
       return block?.[":block/string"];
     })
     .map((block) => {
@@ -351,12 +363,18 @@ const triggerModifyDom = debounce(async () => {
     let el = item.div.parentElement.querySelector(".roam-ref-radar");
     console.log({ el, item });
     if (el) {
-      ReactDom.render(<KeywordRadar data={item} />, el);
+      ReactDom.render(
+        <KeywordRadar uninstall={() => el.remove()} data={item} />,
+        el,
+      );
     } else {
       const div = document.createElement("div");
       item.div.insertAdjacentElement("afterend", div);
       div.className = "roam-ref-radar";
-      ReactDom.render(<KeywordRadar data={item} />, div);
+      ReactDom.render(
+        <KeywordRadar uninstall={() => div.remove()} data={item} />,
+        div,
+      );
     }
   });
   console.log({ result }, " ---- right ?");
@@ -376,8 +394,6 @@ function init() {
         domSet.add(entry.target);
       } else {
         // 可选：如果元素离开视口需要恢复状态，可以在这里处理
-        // console.log("❌ 元素离开视口:", entry.target);
-        // entry.target.classList.remove('is-visible');
         domSet.delete(entry.target);
       }
     });
@@ -405,8 +421,11 @@ function init() {
           const node = _node as Element;
           // 我们只关心元素节点
           if (node.nodeType !== Node.ELEMENT_NODE) return;
-
           // 检查被添加的节点本身是否是目标卡片
+          if (!!node.closest("div[id^=block-input]")) {
+            domSet.add(node.closest("div[id^=block-input]"));
+            triggerModifyDom();
+          }
           if (node.matches("div[id^=block-input]")) {
             console.log("➕ 检测到直接卡片, 开始观察:", node);
             intersectionObserver.observe(node);
@@ -424,7 +443,6 @@ function init() {
         mutation.removedNodes.forEach((_node) => {
           const node = _node as Element;
           if (node.nodeType !== Node.ELEMENT_NODE) return;
-
           if (node.matches("div[id^=block-input]")) {
             console.log("➖ 移除直接 block-input, 停止观察:", node);
             intersectionObserver.unobserve(node);
