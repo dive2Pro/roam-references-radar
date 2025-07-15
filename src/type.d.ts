@@ -822,9 +822,25 @@ interface ExtensionAPI {
 
 // Augment the global window object
 
-
-
 // This allows using `extensionAPI` as a global-like constant in your extension's scope
 // (e.g., in the function passed to `roamAlphaAPI.extension.js`).
 // declare const extensionAPI: ExtensionAPI;
 
+/**
+ * 关键词数据接口 (无变化)
+ */
+interface Keyword {
+  keyword: string;
+  startIndex: number;
+  endIndex: number; // 假设 endIndex 是包含的 (inclusive)
+}
+
+/**
+ * 分组后的结果接口 (新增 text 字段)
+ */
+interface GroupedResultWithText {
+  keywords: Keyword[];
+  start: number;
+  end: number;
+  text: string; // 从原始文本中截取的、代表整个分组范围的字符串
+}

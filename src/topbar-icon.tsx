@@ -1,51 +1,17 @@
-import { Button, Icon, Menu, Popover, MenuItem } from "@blueprintjs/core";
-import { ReactNode, useEffect, useState } from "react";
+import { Button } from "@blueprintjs/core";
 import ReactDom from "react-dom";
-import { AhoCorasick } from "./AhoCorasick";
 
 import { appendToTopbar, extension_helper } from "./helper";
-import { Popover as GlobalPopover, usePopover } from "./globalExpander";
 import { debounce } from "./utils";
-
-let AC: AhoCorasick;
-const newAhoCorasick = async () => {
-  const allPages = (
-    (await window.roamAlphaAPI.data.async.fast.q(`
-      [
-        :find (pull ?page [:block/uid :node/title])
-        :where
-          [?page :node/title ]
-
-      ]
-      `)) as { ":block/uid": string; ":node/title": string }[][]
-  )
-    .map((item) => item[0])
-    .filter((page) => page[":node/title"].length > 2);
-  const ac = new AhoCorasick(allPages.map((page) => page[":node/title"]));
-  AC = ac;
-  return ac;
-};
+import {
+  onBlockInputChildrenChange,
+  onElementIntersection,
+  renderRadar,
+} from "./comps/KeywordRadar";
+import { newAhoCorasick } from "./allPageSearchEngine";
 
 // 页面上有变化的时候呢?
 
-/**
- * 关键词数据接口 (无变化)
- */
-interface Keyword {
-  keyword: string;
-  startIndex: number;
-  endIndex: number; // 假设 endIndex 是包含的 (inclusive)
-}
-
-/**
- * 分组后的结果接口 (新增 text 字段)
- */
-interface GroupedResultWithText {
-  keywords: Keyword[];
-  start: number;
-  end: number;
-  text: string; // 从原始文本中截取的、代表整个分组范围的字符串
-}
 /**
  * 辅助函数：判断两个关键词的范围是否重叠 (无变化)
  * @param kw1 第一个关键词对象
@@ -121,283 +87,27 @@ export function groupKeywordsWithText(
   return result;
 }
 
-function KeywordRadar({
-  data,
-  uninstall,
-}: {
-  uninstall: () => void;
-  data: {
-    block: PullBlock;
-    blockAcResult: {
-      keyword: string;
-      startIndex: number;
-      endIndex: number;
-    }[];
-    div: HTMLElement;
-  };
-}) {
-  const popover = usePopover();
-  const [blockString, setBlockString] = useState(data.block[":block/string"]);
-  const [blockAcResult, setBlockAcResult] = useState(data.blockAcResult);
-  const contents: ReactNode[] = [];
-  let startIndex = 0;
-  // const blockString = data.block[":block/string"];
-  const groupKeywords = groupKeywordsWithText(blockAcResult, blockString);
-  // 找出重叠的
-  groupKeywords.forEach((acResultItem) => {
-    contents.push(blockString.substring(startIndex, acResultItem.start));
-    startIndex = acResultItem.end + 1;
-    contents.push(
-      <BlockKeyword
-        data={acResultItem}
-        key={`${acResultItem.start}-${acResultItem.end}-${acResultItem.text}`}
-        blockString={blockString}
-        uid={data.block[":block/uid"]}
-        onChange={(text) => {
-          setBlockString(text);
-          console.log({ acResultItem }, text);
-          setBlockAcResult(AC.search(text));
-          // triggerModifyDom();
-        }}
-      />,
-    );
-  });
-  contents.push(blockString.substring(startIndex));
-  console.log({ groupKeywords, blockString, contents }, " ____");
-  useEffect(() => {}, [blockAcResult]);
-  if (!blockAcResult.length) {
-    uninstall();
-    return null;
-  }
-  return (
-    <div>
-      <Icon
-        onClickCapture={(e) => {
-          console.log(` open global`, data, popover);
-          popover.triggerProps.onClick(data.div);
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        icon="star"
-      ></Icon>
-      <GlobalPopover
-        {...popover.popoverProps}
-        onClose={(target) => {
-          console.log(
-            `---`,
-            target?.closest(`div[id^=block-input]`),
-            data.div.id,
-          );
-          if (
-            target &&
-            target
-              .closest(`.rm-block-main`)
-              ?.querySelector(`div[id^=block-input]`) === data.div
-          ) {
-            console.log(`-----------------`);
-            return;
-          }
-          popover.popoverProps.onClose();
-          // triggerModifyDom();
-        }}
-      >
-        <div className="roam-block">{contents}</div>
-      </GlobalPopover>
-    </div>
-  );
-}
-
-function BlockKeyword({
-  data,
-  uid,
-  blockString,
-  onChange,
-}: {
-  uid: string;
-  data: GroupedResultWithText;
-  blockString: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    // @ts-ignore
-    <Popover
-      // interactionKind="hover"
-      autoFocus={false}
-      popoverClassName="roam-ref-radar-popover"
-      content={
-        <Menu className="roam-ref-radar-menu">
-          {/* <MenuItem
-            text="Open in sidebar"
-            icon="add-column-right"
-            onClick={() => {
-              window.roamAlphaAPI.ui.rightSidebar.addWindow({
-                window: {
-                  type: "block",
-                  "block-uid": window.roamAlphaAPI.data.q(`
-                    [
-                      :find ?e .
-                      :where
-                        [?p :node/title "here"]
-                        [?p :block/uid ?e]
-                    ]
-                    `) as unknown as string,
-                },
-              });
-            }}
-          />
-          <MenuItem
-            text="Open linked references"
-            icon="add-column-right"
-            onClick={() => {
-              window.roamAlphaAPI.ui.rightSidebar.addWindow({
-                window: {
-                  type: "mentions",
-                  "block-uid": window.roamAlphaAPI.data.q(`
-                  [
-                    :find ?e .
-                    :where
-                      [?p :node/title "here"]
-                      [?p :block/uid ?e]
-                  ]
-                  `) as unknown as string,
-                },
-              });
-            }}
-          /> */}
-          {data.keywords.map((keywordItem) => {
-            return (
-              <MenuItem
-                text={`[[${keywordItem.keyword}]]`}
-                icon="new-link"
-                onClick={() => {
-                  /**
-                   * 1. 更新数据源
-                   * 2. 更新当前组件
-                   * 3. 关闭弹窗
-                   */
-                  const newBlockString =
-                    blockString.substring(0, keywordItem.startIndex) +
-                    `[[${keywordItem.keyword}]]` +
-                    blockString.substring(keywordItem.endIndex + 1);
-                  window.roamAlphaAPI.data.block.update({
-                    block: {
-                      uid: uid,
-                      string: newBlockString,
-                    },
-                  });
-                  onChange(newBlockString);
-                }}
-              />
-            );
-          })}
-        </Menu>
-      }
-    >
-      <span className="block-keyword">{data.text}</span>
-    </Popover>
-  );
-}
-
-const domSet = new WeakSet<Element>();
-
-const triggerModifyDom = debounce(async () => {
-  const getBlocksWithElements = () => {
-    const allDiv = [...document.querySelectorAll(`div[id^=block-input]`)];
-
-    const elementUidMap = allDiv
-      .filter((queryDiv) => {
-        return domSet.has(queryDiv);
-      })
-      .reduce(
-        (p, div) => {
-          const uid = div.id.substring(
-            div.id.lastIndexOf("-", div.id.length - 10) + 1,
-          );
-          p[uid] = {
-            uid,
-            div: div as HTMLElement,
-          };
-          return p;
-        },
-        {} as Record<string, { uid: string; div: HTMLElement }>,
-      );
-    return elementUidMap;
-  };
-  const elementUidMap = getBlocksWithElements();
-  const getAllBlocks = async () => {
-    const uids = Object.keys(elementUidMap);
-    const blocks = await window.roamAlphaAPI.data.async.pull_many(
-      "[:block/string :block/uid]",
-      uids.map((uid) => [":block/uid", uid]),
-    );
-    return blocks;
-  };
-  const allBlocks = await getAllBlocks();
-
-  const ac = await newAhoCorasick();
-
-  console.log({ allBlocks });
-
-  const result = allBlocks
-    .filter((block) => {
-      console.log({ block });
-      const div = elementUidMap[block[":block/uid"]].div;
-      const el = div.parentElement.querySelector(".roam-ref-radar");
-      if (el) {
-        ReactDom.unmountComponentAtNode(el);
-        // el.remove();
-      }
-      return block?.[":block/string"];
-    })
-    .map((block) => {
-      const blockAcResult = ac.search(block[":block/string"]);
-      return {
-        block,
-        blockAcResult,
-        ...elementUidMap[block[":block/uid"]],
-      };
-    })
-    .filter((block) => block.blockAcResult.length);
-
-  result.forEach((item) => {
-    let el = item.div.parentElement.querySelector(".roam-ref-radar");
-    console.log({ el, item });
-    if (el) {
-      ReactDom.render(
-        <KeywordRadar uninstall={() => el.remove()} data={item} />,
-        el,
-      );
-    } else {
-      const div = document.createElement("div");
-      item.div.insertAdjacentElement("afterend", div);
-      div.className = "roam-ref-radar";
-      ReactDom.render(
-        <KeywordRadar uninstall={() => div.remove()} data={item} />,
-        div,
-      );
-    }
-  });
-  console.log({ result }, " ---- right ?");
-}, 500);
-
 extension_helper.on_uninstall(() => {
   document.querySelectorAll(".roam-ref-radar").forEach((div) => div.remove());
 });
+
+const BLOCK_INPUT_QUERY = "div[id^=block-input]";
 
 function init() {
   // --- 步骤 1: 设置 IntersectionObserver ---
   // 这个 Observer 将被用来观察所有动态添加的卡片
   const intersectionCallback: IntersectionObserverCallback = (entries) => {
     entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        // entry.target.classList.add("is-visible");
-        domSet.add(entry.target);
-      } else {
-        // 可选：如果元素离开视口需要恢复状态，可以在这里处理
-        domSet.delete(entry.target);
-      }
+      // if (entry.isIntersecting) {
+      //   // entry.target.classList.add("is-visible");
+      //   domSet.add(entry.target);
+      // } else {
+      //   // 可选：如果元素离开视口需要恢复状态，可以在这里处理
+      //   domSet.delete(entry.target);
+      // }
+      onElementIntersection(entry);
     });
-    triggerModifyDom();
+    // triggerModifyDom();
   };
 
   // 创建一个全局的 IntersectionObserver 实例
@@ -421,18 +131,20 @@ function init() {
           const node = _node as Element;
           // 我们只关心元素节点
           if (node.nodeType !== Node.ELEMENT_NODE) return;
-          // 检查被添加的节点本身是否是目标卡片
-          if (!!node.closest("div[id^=block-input]")) {
-            domSet.add(node.closest("div[id^=block-input]"));
-            triggerModifyDom();
+          // 如果新增的节点属于 block-input 的子孙, 触发该节点更新
+          if (!!node.closest(BLOCK_INPUT_QUERY)) {
+            // domSet.add(node.closest(BLOCK_INPUT_QUERY));
+            // triggerModifyDom();
+            onBlockInputChildrenChange(node.closest(BLOCK_INPUT_QUERY));
           }
-          if (node.matches("div[id^=block-input]")) {
+
+          if (node.matches(BLOCK_INPUT_QUERY)) {
             console.log("➕ 检测到直接卡片, 开始观察:", node);
             intersectionObserver.observe(node);
           }
 
           // 检查被添加的节点内部是否包含目标卡片 (处理嵌套情况)
-          const nestedCards = node.querySelectorAll("div[id^=block-input]");
+          const nestedCards = node.querySelectorAll(BLOCK_INPUT_QUERY);
           nestedCards.forEach((card) => {
             console.log("➕ 检测到嵌套卡片, 开始观察:", card);
             intersectionObserver.observe(card);
@@ -443,12 +155,12 @@ function init() {
         mutation.removedNodes.forEach((_node) => {
           const node = _node as Element;
           if (node.nodeType !== Node.ELEMENT_NODE) return;
-          if (node.matches("div[id^=block-input]")) {
+          if (node.matches(BLOCK_INPUT_QUERY)) {
             console.log("➖ 移除直接 block-input, 停止观察:", node);
             intersectionObserver.unobserve(node);
           }
 
-          const nestedCards = node.querySelectorAll("div[id^=block-input]");
+          const nestedCards = node.querySelectorAll(BLOCK_INPUT_QUERY);
           nestedCards.forEach((card) => {
             console.log("➖ 移除嵌套block-input, 停止观察:", card);
             intersectionObserver.unobserve(card);

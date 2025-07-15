@@ -1,6 +1,12 @@
 // src/components/Popover/Popover.js
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useReducer,
+} from "react";
 import { useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -9,26 +15,30 @@ import {
   createWaveAnimation,
 } from "./Wave";
 
+let currentAnchorEl: HTMLElement | null = null;
 // 鼠标或者点击或者悬浮 0.5 秒, 扩展动画会完成, 保持打开状态
 // 其他情况会关闭扩展动画
 export const usePopover = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const forceUpdate = useReducer((p) => p + 1, 0)[1];
 
   const open = useCallback((target: HTMLElement) => {
     // event.currentTarget 是绑定了事件的元素
-    setAnchorEl((prev) => {
-      if (prev === target) {
-        return null;
-      }
-      return target;
-    });
+    setAnchorEl(target);
+    if (currentAnchorEl === target) {
+      currentAnchorEl = null;
+    } else {
+      currentAnchorEl = target;
+    }
+    forceUpdate();
   }, []);
 
   const close = useCallback(() => {
-    setAnchorEl(null);
+    currentAnchorEl = null;
+    forceUpdate();
   }, []);
 
-  const isOpen = Boolean(anchorEl);
+  const isOpen = Boolean(currentAnchorEl === anchorEl);
   console.log({ isOpen });
   return {
     isOpen,
@@ -52,8 +62,6 @@ el.id = "popover-root";
 if (!document.getElementById("popover-root")) {
   document.body.appendChild(el);
 }
-
-const popoverRoot = document.getElementById("popover-root");
 
 export const Popover = ({
   isOpen,
@@ -135,12 +143,14 @@ export const Popover = ({
         // &&
         // !(event.target as HTMLElement).closest(".roam-ref-radar")
       ) {
+        console.log(` mouse down `, event.target);
         onClose(event.target as HTMLElement);
       }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        console.log(` keydown `, event);
         onClose();
       }
     };
