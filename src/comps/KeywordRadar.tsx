@@ -93,10 +93,10 @@ function KeywordRadar({
     );
   });
   contents.push(blockString.substring(startIndex));
-  console.log({ groupKeywords, blockString, contents }, " ____");
+  // console.log({ groupKeywords, blockString, contents }, " ____");
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  console.log({ blockAcResult, isPopoverOpen });
+  // console.log({ blockAcResult, isPopoverOpen });
   if (!blockAcResult.length) {
     setIsPopoverOpen(false);
     uninstall();
