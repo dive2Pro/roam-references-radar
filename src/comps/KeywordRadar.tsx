@@ -7,6 +7,7 @@ import { usePopover } from "../globalExpander";
 import { groupKeywordsWithText } from "../topbar-icon";
 import { debounce } from "../utils";
 import { BlockKeyword } from "./BlockKeyword";
+import { PageRefHint } from "./Hint";
 
 // 1. 每次进入视口中的 block , 雷达扫描一次.
 // 2. 撤销和反撤销, 根据影响到的 div , 触发雷达扫描
@@ -46,6 +47,7 @@ const observers = new Observers();
 function KeywordRadar({
   data,
   uninstall,
+  el,
 }: {
   uninstall: () => void;
   data: {
@@ -57,6 +59,7 @@ function KeywordRadar({
     }[];
     div: HTMLElement;
   };
+  el: HTMLElement;
 }) {
   const popover = usePopover();
   const [blockString, setBlockString] = useState(data.block[":block/string"]);
@@ -85,11 +88,11 @@ function KeywordRadar({
         uid={data.block[":block/uid"]}
         onChange={(text) => {
           // setBlockString(text);
-          console.log({ acResultItem }, text);
+          // console.log({ acResultItem }, text);
           // setBlockAcResult(AC.search(text));
           // triggerModifyDom();
         }}
-      />,
+      />
     );
   });
   contents.push(blockString.substring(startIndex));
@@ -102,65 +105,68 @@ function KeywordRadar({
     uninstall();
     return null;
   }
+  const rect = data.div.getBoundingClientRect();
+  // el.style.width = rect.width + "px";
+  // el.style.left = 40 + "px";
+  // console.log({ rect }, el);
   return (
-    <div>
+    <>
       {/* @ts-ignore */}
       <Popover
-        content={<div className="roam-block">{contents}</div>}
+        position="left"
+        // position="top"
+        content={
+          <div
+            className="roam-block"
+            style={{
+              width: rect.width - 10,
+              // top: rect.top,
+              paddingLeft: 10,
+              height: rect.height,
+              // left: rect.left + 20,
+            }}
+          >
+            {contents}
+          </div>
+        }
         isOpen={isPopoverOpen}
         onClose={() => {
           setIsPopoverOpen(false);
         }}
       >
-        <Icon
-          onClick={(e) => {
+        <PageRefHint
+          style={{
+            width: rect.width,
+            // top: rect.top,
+            // height: rect.height,
+            // left: rect.left,
+            top: 20,
+          }}
+          onClick={() => {
             console.log(` open global`, data, popover);
             // popover.triggerProps.onClick(data.div);
-            e.preventDefault();
+            // e.preventDefault();
             setIsPopoverOpen(true);
             // e.stopPropagation();
           }}
-          icon="star"
-        ></Icon>
+        ></PageRefHint>
       </Popover>
-      {/* <GlobalPopover
-        {...popover.popoverProps}
-        onClose={(target) => {
-          console.log(
-            `---`,
-            target?.closest(`div[id^=block-input]`),
-            data.div.id,
-          );
-          if (
-            target &&
-            target
-              .closest(`.rm-block-main`)
-              ?.querySelector(`div[id^=block-input]`) === data.div
-          ) {
-            console.log(`-----------------`);
-            return;
-          }
-          popover.popoverProps.onClose();
-          // triggerModifyDom();
-        }}
-      >
-        <div className="roam-block">{contents}</div>
-      </GlobalPopover> */}
-    </div>
+    </>
   );
 }
 
 export function rescan() {}
 
 export function renderRadar(data: any, el: Element) {
-  console.log({ data, el });
+  // console.log({ data, el });
   ReactDOM.render(
     <KeywordRadar
       // key={item.block[":block/string"]}
       uninstall={() => el.remove()}
       data={data}
+      el={el as HTMLElement}
     />,
-    el,
+    el
   );
 }
 
@@ -196,20 +202,17 @@ const triggerModifyDom = debounce(async () => {
         }
         return domSetContained;
       })
-      .reduce(
-        (p, div) => {
-          const uid = div.id.substring(
-            div.id.lastIndexOf("-", div.id.length - 10) + 1,
-          );
-          p[uid] = {
-            uid,
-            div: div as HTMLElement,
-          };
-          domSet.delete(div);
-          return p;
-        },
-        {} as Record<string, { uid: string; div: HTMLElement }>,
-      );
+      .reduce((p, div) => {
+        const uid = div.id.substring(
+          div.id.lastIndexOf("-", div.id.length - 10) + 1
+        );
+        p[uid] = {
+          uid,
+          div: div as HTMLElement,
+        };
+        domSet.delete(div);
+        return p;
+      }, {} as Record<string, { uid: string; div: HTMLElement }>);
     return elementUidMap;
   };
   const elementUidMap = getBlocksWithElements();
@@ -217,7 +220,7 @@ const triggerModifyDom = debounce(async () => {
     const uids = Object.keys(elementUidMap);
     const blocks = await window.roamAlphaAPI.data.async.pull_many(
       "[:block/string :block/uid]",
-      uids.map((uid) => [":block/uid", uid]),
+      uids.map((uid) => [":block/uid", uid])
     );
     return blocks;
   };
@@ -225,11 +228,11 @@ const triggerModifyDom = debounce(async () => {
 
   const ac = await newAhoCorasick();
 
-  console.log({ allBlocks });
+  // console.log({ allBlocks });
 
   const result = allBlocks
     .filter((block) => {
-      console.log({ block });
+      // console.log({ block });
       // const div = elementUidMap[block[":block/uid"]].div;
       // const el = div.parentElement.querySelector(".roam-ref-radar");
       // if (el) {
@@ -260,7 +263,7 @@ const triggerModifyDom = debounce(async () => {
   //
   result.forEach((item) => {
     let el = item.div.parentElement.querySelector(".roam-ref-radar");
-    console.log({ el, item });
+    // console.log({ el, item });
     if (!el) {
       el = document.createElement("div");
       item.div.insertAdjacentElement("afterend", el);
@@ -273,7 +276,7 @@ const triggerModifyDom = debounce(async () => {
         // blockAcResult: acResultItem,
         ...item,
       },
-      el,
+      el
     );
   });
 }, 100);

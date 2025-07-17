@@ -1,7 +1,12 @@
 .roam-ref-radar {
   position: absolute;
-  right: -12px;
+  right: -0;
   top: 2px;
+}
+
+:has(.rm-block__comment-button) .roam-ref-radar {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .bp3-transition-container:has(.roam-ref-radar-popover) {

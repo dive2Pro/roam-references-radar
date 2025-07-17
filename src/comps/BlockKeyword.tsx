@@ -61,7 +61,7 @@ export function BlockKeyword({
             return (
               <MenuItem
                 text={`[[${keywordItem.keyword}]]`}
-                icon="new-link"
+                icon="git-new-branch"
                 onClick={() => {
                   /**
                    * 1. 更新数据源
