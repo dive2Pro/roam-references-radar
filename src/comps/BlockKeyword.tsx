@@ -87,7 +87,7 @@ export function BlockKeyword({
       }
       captureDismiss
     >
-      <span className="block-keyword">{data.text}</span>
+      <span className="radar-highlighter">{data.text}</span>
     </Popover>
   );
 }
