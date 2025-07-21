@@ -39,7 +39,7 @@ export const usePopover = () => {
   }, []);
 
   const isOpen = Boolean(currentAnchorEl === anchorEl);
-  console.log({ isOpen });
+  // console.log({ isOpen });
   return {
     isOpen,
     open,

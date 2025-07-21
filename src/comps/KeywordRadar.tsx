@@ -15,7 +15,7 @@ import { PageRefHint } from "./Hint";
 
 type ObserverParams = {
   uid: string;
-  div: HTMLElement;
+  elements: HTMLElement[];
   block: PullBlock;
   blockAcResult: Match[];
 };
@@ -44,21 +44,22 @@ class Observers {
 
 const observers = new Observers();
 
+export type KeywordRadarData = {
+  block: PullBlock;
+  blockAcResult: {
+    keyword: string;
+    startIndex: number;
+    endIndex: number;
+  }[];
+  div: HTMLElement;
+};
 function KeywordRadar({
   data,
   uninstall,
   el,
 }: {
   uninstall: () => void;
-  data: {
-    block: PullBlock;
-    blockAcResult: {
-      keyword: string;
-      startIndex: number;
-      endIndex: number;
-    }[];
-    div: HTMLElement;
-  };
+  data: KeywordRadarData;
   el: HTMLElement;
 }) {
   const popover = usePopover();
@@ -72,6 +73,15 @@ function KeywordRadar({
     return observers.add(data.block[":block/uid"], (params) => {
       setBlockString(params.block[":block/string"]);
       setBlockAcResult(params.blockAcResult);
+      if (!params.blockAcResult.length) {
+
+        setIsPopoverOpen(false);
+        setTimeout(() => {
+          console.log(` will uninstall : `, el)
+          uninstall();
+        }, 200);
+      }
+      
     });
   }, []);
   // const blockString = data.block[":block/string"];
@@ -80,6 +90,7 @@ function KeywordRadar({
   groupKeywords.forEach((acResultItem) => {
     contents.push(blockString.substring(startIndex, acResultItem.start));
     startIndex = acResultItem.end + 1;
+
     contents.push(
       <BlockKeyword
         data={acResultItem}
@@ -100,11 +111,7 @@ function KeywordRadar({
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   // console.log({ blockAcResult, isPopoverOpen });
-  if (!blockAcResult.length) {
-    setIsPopoverOpen(false);
-    uninstall();
-    return null;
-  }
+
   const rect = data.div.getBoundingClientRect();
   // el.style.width = rect.width + "px";
   // el.style.left = 40 + "px";
@@ -122,7 +129,7 @@ function KeywordRadar({
               width: rect.width - 10,
               // top: rect.top,
               paddingLeft: 10,
-              height: rect.height,
+              // height: rect.height,
               // left: rect.left + 20,
             }}
           >
@@ -157,7 +164,7 @@ function KeywordRadar({
 
 export function rescan() {}
 
-export function renderRadar(data: any, el: Element) {
+export function renderRadar(data: KeywordRadarData, el: Element) {
   // console.log({ data, el });
   ReactDOM.render(
     <KeywordRadar
@@ -169,6 +176,7 @@ export function renderRadar(data: any, el: Element) {
     el
   );
 }
+const domSet = new WeakSet<Element>();
 
 export function onElementIntersection(entry: IntersectionObserverEntry) {
   if (entry.isIntersecting) {
@@ -188,13 +196,10 @@ export function onBlockInputChildrenChange(blockInputElement: Element) {
   });
 }
 
-const domSet = new WeakSet<Element>();
-
 const triggerModifyDom = debounce(async () => {
   const getBlocksWithElements = () => {
-    const allDiv = [...document.querySelectorAll(`div[id^=block-input]`)];
-
-    const elementUidMap = allDiv
+    const allDivs = [...document.querySelectorAll(`div[id^=block-input]`)];
+    const elementUidMap = allDivs
       .filter((queryDiv) => {
         const domSetContained = domSet.has(queryDiv);
         if (!domSetContained) {
@@ -206,13 +211,23 @@ const triggerModifyDom = debounce(async () => {
         const uid = div.id.substring(
           div.id.lastIndexOf("-", div.id.length - 10) + 1
         );
-        p[uid] = {
-          uid,
-          div: div as HTMLElement,
-        };
+        if (p[uid]) {
+          p[uid].push({
+            uid,
+            div: div as HTMLElement,
+          });
+        } else {
+          p[uid] = [
+            {
+              uid,
+              div: div as HTMLElement,
+            },
+          ];
+        }
+
         domSet.delete(div);
         return p;
-      }, {} as Record<string, { uid: string; div: HTMLElement }>);
+      }, {} as Record<string, { uid: string; div: HTMLElement }[]>);
     return elementUidMap;
   };
   const elementUidMap = getBlocksWithElements();
@@ -246,7 +261,8 @@ const triggerModifyDom = debounce(async () => {
       const result = {
         block,
         blockAcResult,
-        ...elementUidMap[block[":block/uid"]],
+        uid: block[":block/uid"],
+        elements: elementUidMap[block[":block/uid"]].map((item) => item.div),
       };
 
       observers.emit(block[":block/uid"], result);
@@ -262,21 +278,24 @@ const triggerModifyDom = debounce(async () => {
   // }
   //
   result.forEach((item) => {
-    let el = item.div.parentElement.querySelector(".roam-ref-radar");
-    // console.log({ el, item });
-    if (!el) {
-      el = document.createElement("div");
-      item.div.insertAdjacentElement("afterend", el);
-      el.className = "roam-ref-radar";
-    }
-    // console.log({ item, el }, " ---- right ?");
-    // const acResultItem = AC.search(item.block[":block/string"]);
-    renderRadar(
-      {
-        // blockAcResult: acResultItem,
-        ...item,
-      },
-      el
-    );
+    item.elements.forEach((element) => {
+      let el = element.parentElement.querySelector(".roam-ref-radar");
+      // console.log({ el, item });
+      if (!el) {
+        el = document.createElement("div");
+        element.insertAdjacentElement("afterend", el);
+        el.className = "roam-ref-radar";
+      }
+      // console.log({ item, el }, " ---- right ?");
+      // const acResultItem = AC.search(item.block[":block/string"]);
+      renderRadar(
+        {
+          // blockAcResult: acResultItem,
+          ...item,
+          div: element,
+        },
+        el
+      );
+    });
   });
 }, 100);

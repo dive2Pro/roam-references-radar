@@ -6,7 +6,6 @@ import { debounce } from "./utils";
 import {
   onBlockInputChildrenChange,
   onElementIntersection,
-  renderRadar,
 } from "./comps/KeywordRadar";
 import { newAhoCorasick } from "./allPageSearchEngine";
 
