@@ -1,6 +1,5 @@
 import { extension_helper } from "./helper";
 import { initExtension } from "./extension";
-import { initTopbarIcon } from "./topbar-icon";
 
 declare global {
   interface Window {
@@ -9,8 +8,7 @@ declare global {
   }
 }
 function onload({ extensionAPI }: { extensionAPI: ExtensionAPI }) {
-  initTopbarIcon(extensionAPI);
-  initExtension();
+  initExtension(extensionAPI);
 }
 
 function onunload() {
