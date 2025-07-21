@@ -257,7 +257,7 @@ const triggerModifyDom = debounce(async () => {
       return block?.[":block/string"];
     })
     .map((block) => {
-      const blockAcResult = ac.search(block[":block/string"]);
+      const blockAcResult = ac.search(block[":block/string"], false);
       const result = {
         block,
         blockAcResult,
