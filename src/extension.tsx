@@ -131,14 +131,14 @@ function init() {
           }
 
           if (node.matches(BLOCK_INPUT_QUERY)) {
-            console.log("➕ 检测到直接卡片, 开始观察:", node);
+            // console.log("➕ 检测到直接卡片, 开始观察:", node);
             intersectionObserver.observe(node);
           }
 
           // 检查被添加的节点内部是否包含目标卡片 (处理嵌套情况)
           const nestedCards = node.querySelectorAll(BLOCK_INPUT_QUERY);
           nestedCards.forEach((card) => {
-            console.log("➕ 检测到嵌套卡片, 开始观察:", card);
+            // console.log("➕ 检测到嵌套卡片, 开始观察:", card);
             intersectionObserver.observe(card);
           });
         });
@@ -148,13 +148,13 @@ function init() {
           const node = _node as Element;
           if (node.nodeType !== Node.ELEMENT_NODE) return;
           if (node.matches(BLOCK_INPUT_QUERY)) {
-            console.log("➖ 移除直接 block-input, 停止观察:", node);
+            // console.log("➖ 移除直接 block-input, 停止观察:", node);
             intersectionObserver.unobserve(node);
           }
 
           const nestedCards = node.querySelectorAll(BLOCK_INPUT_QUERY);
           nestedCards.forEach((card) => {
-            console.log("➖ 移除嵌套block-input, 停止观察:", card);
+            // console.log("➖ 移除嵌套block-input, 停止观察:", card);
             intersectionObserver.unobserve(card);
           });
         });

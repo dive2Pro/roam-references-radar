@@ -143,14 +143,14 @@ export const Popover = ({
         // &&
         // !(event.target as HTMLElement).closest(".roam-ref-radar")
       ) {
-        console.log(` mouse down `, event.target);
+        // console.log(` mouse down `, event.target);
         onClose(event.target as HTMLElement);
       }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        console.log(` keydown `, event);
+        // console.log(` keydown `, event);
         onClose();
       }
     };

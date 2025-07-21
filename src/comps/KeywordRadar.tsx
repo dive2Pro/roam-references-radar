@@ -150,7 +150,7 @@ function KeywordRadar({
             top: 20,
           }}
           onClick={() => {
-            console.log(` open global`, data, popover);
+            // console.log(` open global`, data, popover);
             // popover.triggerProps.onClick(data.div);
             // e.preventDefault();
             setIsPopoverOpen(true);
