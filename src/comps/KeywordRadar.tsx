@@ -1,10 +1,10 @@
-import { Icon, Popover } from "@blueprintjs/core";
+import { Popover } from "@blueprintjs/core";
 import React, { ReactNode, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { Match } from "../AhoCorasick";
-import { AC, newAhoCorasick } from "../allPageSearchEngine";
+import { newAhoCorasick } from "../allPageSearchEngine";
 import { usePopover } from "../globalExpander";
-import { groupKeywordsWithText } from "../topbar-icon";
+import { groupKeywordsWithText } from "../extension";
 import { debounce } from "../utils";
 import { BlockKeyword } from "./BlockKeyword";
 import { PageRefHint } from "./Hint";
@@ -74,14 +74,12 @@ function KeywordRadar({
       setBlockString(params.block[":block/string"]);
       setBlockAcResult(params.blockAcResult);
       if (!params.blockAcResult.length) {
-
         setIsPopoverOpen(false);
         setTimeout(() => {
-          console.log(` will uninstall : `, el)
+          console.log(` will uninstall : `, el);
           uninstall();
         }, 200);
       }
-      
     });
   }, []);
   // const blockString = data.block[":block/string"];
@@ -165,7 +163,7 @@ function KeywordRadar({
 export function rescan() {}
 
 export function renderRadar(data: KeywordRadarData, el: Element) {
-  // console.log({ data, el });
+  console.log({ data, el });
   ReactDOM.render(
     <KeywordRadar
       // key={item.block[":block/string"]}
@@ -176,13 +174,19 @@ export function renderRadar(data: KeywordRadarData, el: Element) {
     el
   );
 }
-const domSet = new WeakSet<Element>();
+
+const domUidsSet = new Set<String>();
+
+const getUidFromDiv = (div: Element) => {
+  const uid = div.id.substring(div.id.lastIndexOf("-", div.id.length - 10) + 1);
+  return uid;
+};
 
 export function onElementIntersection(entry: IntersectionObserverEntry) {
   if (entry.isIntersecting) {
-    domSet.add(entry.target);
+    domUidsSet.add(getUidFromDiv(entry.target));
   } else {
-    domSet.delete(entry.target);
+    domUidsSet.delete(getUidFromDiv(entry.target));
   }
   requestIdleCallback(() => {
     triggerModifyDom();
@@ -190,55 +194,22 @@ export function onElementIntersection(entry: IntersectionObserverEntry) {
 }
 
 export function onBlockInputChildrenChange(blockInputElement: Element) {
-  domSet.add(blockInputElement);
+  domUidsSet.add(getUidFromDiv(blockInputElement));
   requestIdleCallback(() => {
     triggerModifyDom();
   });
 }
 
 const triggerModifyDom = debounce(async () => {
-  const getBlocksWithElements = () => {
-    const allDivs = [...document.querySelectorAll(`div[id^=block-input]`)];
-    const elementUidMap = allDivs
-      .filter((queryDiv) => {
-        const domSetContained = domSet.has(queryDiv);
-        if (!domSetContained) {
-          domSet.delete(queryDiv);
-        }
-        return domSetContained;
-      })
-      .reduce((p, div) => {
-        const uid = div.id.substring(
-          div.id.lastIndexOf("-", div.id.length - 10) + 1
-        );
-        if (p[uid]) {
-          p[uid].push({
-            uid,
-            div: div as HTMLElement,
-          });
-        } else {
-          p[uid] = [
-            {
-              uid,
-              div: div as HTMLElement,
-            },
-          ];
-        }
-
-        domSet.delete(div);
-        return p;
-      }, {} as Record<string, { uid: string; div: HTMLElement }[]>);
-    return elementUidMap;
-  };
-  const elementUidMap = getBlocksWithElements();
   const getAllBlocks = async () => {
-    const uids = Object.keys(elementUidMap);
+    const uids = [...domUidsSet.values()];
     const blocks = await window.roamAlphaAPI.data.async.pull_many(
       "[:block/string :block/uid]",
       uids.map((uid) => [":block/uid", uid])
     );
     return blocks;
   };
+
   const allBlocks = await getAllBlocks();
 
   const ac = await newAhoCorasick();
@@ -247,7 +218,6 @@ const triggerModifyDom = debounce(async () => {
 
   const result = allBlocks
     .filter((block) => {
-      // console.log({ block });
       // const div = elementUidMap[block[":block/uid"]].div;
       // const el = div.parentElement.querySelector(".roam-ref-radar");
       // if (el) {
@@ -262,21 +232,16 @@ const triggerModifyDom = debounce(async () => {
         block,
         blockAcResult,
         uid: block[":block/uid"],
-        elements: elementUidMap[block[":block/uid"]].map((item) => item.div),
+        elements: [
+          ...document.querySelectorAll(`div[id*="${block[":block/uid"]}"]`),
+        ] as HTMLElement[],
       };
 
       observers.emit(block[":block/uid"], result);
       return result;
     })
-    // 只有查询到有 radar 数据的才显示
-    // TODO: 如果没有 acresult 了, 不应该显示雷达了, 但是 popover 是打开的,
     .filter((block) => block.blockAcResult.length);
-
-  // while(result?.length) {
-  //   const current = result.pop()
-
-  // }
-  //
+  domUidsSet.clear();
   result.forEach((item) => {
     item.elements.forEach((element) => {
       let el = element.parentElement.querySelector(".roam-ref-radar");
@@ -286,11 +251,8 @@ const triggerModifyDom = debounce(async () => {
         element.insertAdjacentElement("afterend", el);
         el.className = "roam-ref-radar";
       }
-      // console.log({ item, el }, " ---- right ?");
-      // const acResultItem = AC.search(item.block[":block/string"]);
       renderRadar(
         {
-          // blockAcResult: acResultItem,
           ...item,
           div: element,
         },
@@ -299,3 +261,7 @@ const triggerModifyDom = debounce(async () => {
     });
   });
 }, 100);
+
+async function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

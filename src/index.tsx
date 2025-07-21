@@ -1,5 +1,6 @@
 import { extension_helper } from "./helper";
 import { initExtension } from "./extension";
+import "./style.less"
 
 declare global {
   interface Window {
