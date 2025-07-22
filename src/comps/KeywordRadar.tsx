@@ -3,7 +3,6 @@ import React, { ReactNode, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { Match } from "../AhoCorasick";
 import { newAhoCorasick } from "../allPageSearchEngine";
-import { usePopover } from "../globalExpander";
 import { groupKeywordsWithText } from "../extension";
 import { debounce } from "../utils";
 import { BlockKeyword } from "./BlockKeyword";
@@ -62,7 +61,6 @@ function KeywordRadar({
   data: KeywordRadarData;
   el: HTMLElement;
 }) {
-  const popover = usePopover();
   const [blockString, setBlockString] = useState(data.block[":block/string"]);
   // const blockString = data.block[":block/string"];
   const [blockAcResult, setBlockAcResult] = useState(data.blockAcResult);
@@ -163,7 +161,7 @@ function KeywordRadar({
 export function rescan() {}
 
 export function renderRadar(data: KeywordRadarData, el: Element) {
-  console.log({ data, el });
+  // console.log({ data, el });
   ReactDOM.render(
     <KeywordRadar
       // key={item.block[":block/string"]}
@@ -217,17 +215,18 @@ const triggerModifyDom = debounce(async () => {
   // console.log({ allBlocks });
 
   const result = allBlocks
-    .filter((block) => {
+  // 注释的原因是: 当 block  字符串被清空时, 会导致 radar 不消失.
+    // .filter((block) => {
       // const div = elementUidMap[block[":block/uid"]].div;
       // const el = div.parentElement.querySelector(".roam-ref-radar");
       // if (el) {
       //   // ReactDom.unmountComponentAtNode(el);
       //   // el.remove();
       // }
-      return block?.[":block/string"];
-    })
+    //   return block?.[":block/string"];
+    // })
     .map((block) => {
-      const blockAcResult = ac.search(block[":block/string"], false);
+      const blockAcResult = ac.search(block?.[":block/string"] || "", false);
       const result = {
         block,
         blockAcResult,
