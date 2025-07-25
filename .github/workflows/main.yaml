@@ -45,13 +45,13 @@ jobs:
           mkdir ${{ env.EXTENSION_DIR }} || true
           cat <<EOF > ${{ env.EXTENSION_JSON }}
               {
-                "name": "",
-                "short_description": "",
-                "author": "",
+                "name": "Roam References Radar",
+                "short_description": "A Roam Research plugin that helps you discover more potential connections in your knowledge graph by identifying and suggesting relevant references.",
+                "author": "hyc",
                 "source_url": "${{github.server_url}}/${{ github.repository }}",
                 "source_repo": "${{github.server_url}}/${{ github.repository }}.git",
                 "source_commit": "$GITHUB_SHA",
-                "stripe_account": ""
+                "stripe_account": "acct_1LLkJkQbYbNOfzpa"
               }            
           EOF
 
