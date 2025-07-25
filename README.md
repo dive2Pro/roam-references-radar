@@ -2,7 +2,7 @@
 
 A Roam Research plugin that helps you discover more potential connections in your knowledge graph by identifying and suggesting relevant references.
 
-![PixPin_2025-07-25_17-42-07](https://github.com/user-attachments/assets/e18fe21a-84b9-4d20-ab00-250aef822f02)
+![PixPin_2025-07-25_17-42-07](https://github.com/dive2Pro/roam-references-radar/blob/main/assets/PixPin_2025-07-25_17-42-07.gif)
 
 
 ## Key Functionality
