@@ -122,9 +122,10 @@ function KeywordRadar({
           <div
             className="roam-block"
             style={{
-              width: rect.width - 10,
+              // width: rect.width - 10,
               // top: rect.top,
               paddingLeft: 10,
+              paddingRight: 10,
               // height: rect.height,
               // left: rect.left + 20,
             }}
@@ -149,7 +150,7 @@ function KeywordRadar({
             // console.log(` open global`, data, popover);
             // popover.triggerProps.onClick(data.div);
             // e.preventDefault();
-            setIsPopoverOpen(true);
+            setIsPopoverOpen(!isPopoverOpen);
             // e.stopPropagation();
           }}
         ></PageRefHint>
@@ -243,11 +244,12 @@ const triggerModifyDom = debounce(async () => {
   domUidsSet.clear();
   result.forEach((item) => {
     item.elements.forEach((element) => {
-      let el = element.parentElement.querySelector(".roam-ref-radar");
+      let el = element.querySelector(".roam-ref-radar");
       // console.log({ el, item });
       if (!el) {
-        el = document.createElement("div");
-        element.insertAdjacentElement("afterend", el);
+        el = document.createElement("span");
+        // element.insertAdjacentElement("afterend", el);
+        element.appendChild(el)
         el.className = "roam-ref-radar";
       }
       renderRadar(
@@ -260,7 +262,3 @@ const triggerModifyDom = debounce(async () => {
     });
   });
 }, 100);
-
-async function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

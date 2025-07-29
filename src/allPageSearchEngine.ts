@@ -13,7 +13,7 @@ export const newAhoCorasick = async () => {
       `)) as { ":block/uid": string; ":node/title": string }[][]
   )
     .map((item) => item[0])
-    .filter((page) => page[":node/title"].length > 2);
+    .filter((page) => page[":node/title"].length >= 2);
   const ac = new AhoCorasick(allPages.map((page) => page[":node/title"]));
   AC = ac;
   return ac;

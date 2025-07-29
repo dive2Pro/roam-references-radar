@@ -15,6 +15,12 @@ A Roam Research plugin that helps you discover more potential connections in you
 
 4. **Multiple Reference Links**: For each identified keyword, the popover displays multiple possible reference links, allowing you to select the most relevant connection for your knowledge graph.
 
+
+### Usage Tips
+
+**Page Recognition Rules**: The plugin automatically identifies pages in your Roam graph but filters out pages with overly short titles (such as single characters) to ensure more accurate and useful connection recommendations.
+
+
 ## Installation
 
 ### Via Roam Depot
@@ -39,13 +45,6 @@ yarn dev
 yarn build
 ```
 
-### Project Structure
-
-- `src/AhoCorasick.ts` - Efficient string matching algorithm implementation
-- `src/comps/KeywordRadar.tsx` - Keyword Radar component
-- `src/globalExpander.tsx` - Global Expander implementation
-- `src/allPageSearchEngine.ts` - All Page Search Engine
-- `src/topbar-icon.tsx` - Topbar icon and initialization logic
 
 ## Contribution
 

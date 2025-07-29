@@ -1,7 +1,7 @@
 import { Button, Icon } from "@blueprintjs/core";
 import { CSSProperties, useRef, useState } from "react";
 import "./comp.less";
- 
+
 export function PageRefHint(props: {
   onClick: () => void;
   style: CSSProperties;
@@ -16,9 +16,23 @@ export function PageRefHint(props: {
   // );
   // return <span className="rm-icon-key-prompt radar-icon" onClick={props.onClick}></span>;
   // return <HintIcon type="quantumLink" size={18} />
-  return <Button icon={<EyeIcon />} onClick={props.onClick} id="bridge" minimal small />;
+  return (
+    <Button
+      icon={<EyeIcon />}
+      onClickCapture={(e) => {
+        props.onClick();
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+      onPointerDown={(e) => {
+        e.preventDefault();
+      }}
+      id="bridge"
+      minimal
+      small
+    />
+  );
 }
- 
 
 const EyeIcon = ({ className = "", strokeWidth = 1.5 }) => (
   <svg
