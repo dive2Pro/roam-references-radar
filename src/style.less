@@ -1,17 +1,23 @@
 .roam-ref-radar {
   position: absolute;
-  right: 0;
-  top: 4px;
+  right: 15px;
+  top: 3px;
   bottom: 4px;
   padding: 0 4px;
+
   .bp3-popover-target {
     height: 100%;
   }
+
   &:hover {
     .roam-ref-radar-hint {
       width: 20px;
     }
   }
+}
+
+.rm-block-main.rm-block__self:has(.roam-ref-radar) {
+  position: relative;
 }
 
 :has(.rm-block__comment-button) .roam-ref-radar {
@@ -26,7 +32,8 @@
 /* src/components/Popover/Popover.css */
 
 .popover-panel {
-  position: fixed; /* 使用 fixed 定位，相对于视口 */
+  position: fixed;
+  /* 使用 fixed 定位，相对于视口 */
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -34,7 +41,8 @@
 
   /* 高度由内容决定 */
   height: auto;
-  overflow: hidden; /* 防止子元素溢出圆角 */
+  overflow: hidden;
+  /* 防止子元素溢出圆角 */
 
   /* --- 核心动画 --- */
 

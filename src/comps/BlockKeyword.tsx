@@ -14,9 +14,10 @@ export function BlockKeyword({
   return (
     // @ts-ignore
     <Popover
-      // interactionKind="hover"
+      interactionKind="hover"
       autoFocus={false}
       popoverClassName="roam-ref-radar-popover"
+      openOnTargetFocus={false}
       content={
         <Menu className="roam-ref-radar-menu">
           {/* <MenuItem
