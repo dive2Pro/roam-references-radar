@@ -140,11 +140,7 @@ function KeywordRadar({
       >
         <PageRefHint
           style={{
-            width: rect.width,
-            // top: rect.top,
-            // height: rect.height,
-            // left: rect.left,
-            top: 20,
+            width: isPopoverOpen ? 20 : undefined,
           }}
           onClick={() => {
             // console.log(` open global`, data, popover);

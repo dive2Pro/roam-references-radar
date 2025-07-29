@@ -19,6 +19,7 @@ export function PageRefHint(props: {
   return (
     <div
       // icon={<EyeIcon />}
+      style={props.style}
       onClickCapture={(e) => {
         props.onClick();
         e.stopPropagation();
