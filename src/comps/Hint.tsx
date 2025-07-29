@@ -17,8 +17,8 @@ export function PageRefHint(props: {
   // return <span className="rm-icon-key-prompt radar-icon" onClick={props.onClick}></span>;
   // return <HintIcon type="quantumLink" size={18} />
   return (
-    <Button
-      icon={<EyeIcon />}
+    <div
+      // icon={<EyeIcon />}
       onClickCapture={(e) => {
         props.onClick();
         e.stopPropagation();
@@ -27,9 +27,9 @@ export function PageRefHint(props: {
       onPointerDown={(e) => {
         e.preventDefault();
       }}
-      id="bridge"
-      minimal
-      small
+      className="roam-ref-radar-hint"
+      // minimal
+      // small
     />
   );
 }

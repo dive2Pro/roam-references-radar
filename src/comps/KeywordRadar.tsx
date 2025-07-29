@@ -122,10 +122,10 @@ function KeywordRadar({
           <div
             className="roam-block"
             style={{
-              // width: rect.width - 10,
+              width: rect.width - 10,
               // top: rect.top,
               paddingLeft: 10,
-              paddingRight: 10,
+              // paddingRight: 10,
               // height: rect.height,
               // left: rect.left + 20,
             }}
@@ -226,6 +226,7 @@ const triggerModifyDom = debounce(async () => {
       // }
     //   return block?.[":block/string"];
     // })
+    .filter(block => block)
     .map((block) => {
       const blockAcResult = ac.search(block?.[":block/string"] || "", false);
       const result = {
@@ -244,12 +245,12 @@ const triggerModifyDom = debounce(async () => {
   domUidsSet.clear();
   result.forEach((item) => {
     item.elements.forEach((element) => {
-      let el = element.querySelector(".roam-ref-radar");
+      let el = element.parentElement.querySelector(".roam-ref-radar");
       // console.log({ el, item });
       if (!el) {
-        el = document.createElement("span");
-        // element.insertAdjacentElement("afterend", el);
-        element.appendChild(el)
+        el = document.createElement("div");
+        element.insertAdjacentElement("afterend", el);
+        // element.appendChild(el)
         el.className = "roam-ref-radar";
       }
       renderRadar(

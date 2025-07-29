@@ -1,7 +1,17 @@
 .roam-ref-radar {
-  // position: absolute;
-  right: -0;
-  top: 2px;
+  position: absolute;
+  right: 0;
+  top: 4px;
+  bottom: 4px;
+  padding: 0 4px;
+  .bp3-popover-target {
+    height: 100%;
+  }
+  &:hover {
+    .roam-ref-radar-hint {
+      width: 20px;
+    }
+  }
 }
 
 :has(.rm-block__comment-button) .roam-ref-radar {
