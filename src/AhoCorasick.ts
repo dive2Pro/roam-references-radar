@@ -128,7 +128,7 @@ export class AhoCorasick {
         // 从开始标记之后的位置，查找结束标记
         const endIndex = prefix.indexOf(
           pair.end,
-          startIndex + pair.start.length,
+          startIndex + pair.start.length
         );
 
         // 如果也找到了结束标记，那么就确认存在格式化
@@ -189,7 +189,7 @@ export class AhoCorasick {
       const prefix = text.substring(0, firstColonIndex);
       // 检查前缀中是否包含任何一个明确的 Markdown 标记
       const hasFormatting = MD_FORMAT_MARKERS.some((marker) =>
-        prefix.includes(marker),
+        prefix.includes(marker)
       );
 
       // 如果不包含任何标记 (是纯文本)，则跳过这部分
@@ -222,14 +222,46 @@ export class AhoCorasick {
       }
       if (newFilterFound) continue;
 
+      // 步骤 2.1: 检查并跳过 Markdown 图片 `![alt](src)`
       if (text.startsWith("![", i)) {
         const closeBracketIndex = text.indexOf("]", i + 2);
         if (closeBracketIndex > -1 && text[closeBracketIndex + 1] === "(") {
-          if (text.indexOf(")", closeBracketIndex + 2) !== -1) {
-            activeFilterEndMarker = ")";
-            i = closeBracketIndex + 1;
+          const closeParenIndex = text.indexOf(")", closeBracketIndex + 2);
+          if (closeParenIndex !== -1) {
+            // 找到了完整的图片链接，跳过整个结构
+            i = closeParenIndex;
             continue;
           }
+        }
+      }
+
+      // 步骤 2.2: 检查并跳过 Markdown 链接 `[text](url)`
+      if (text[i] === "[" && (i === 0 || text[i - 1] !== "!")) {
+        const closeBracketIndex = text.indexOf("]", i + 1);
+        if (closeBracketIndex > -1 && text[closeBracketIndex + 1] === "(") {
+          const closeParenIndex = text.indexOf(")", closeBracketIndex + 2);
+          if (closeParenIndex > -1) {
+            // 找到了一个完整的链接，跳过整个结构
+            i = closeParenIndex;
+            continue;
+          }
+        }
+      }
+
+      // 步骤 2.3: 检查并跳过裸露的 URL
+      if (text.startsWith("https://", i) || text.startsWith("http://", i)) {
+        let urlEndIndex = i;
+        // 扫描直到遇到空白字符或文本结尾
+        while (
+          urlEndIndex < text.length &&
+          !IS_WHITESPACE_REGEX.test(text[urlEndIndex])
+        ) {
+          urlEndIndex++;
+        }
+        if (urlEndIndex > i) {
+          // 跳过整个 URL
+          i = urlEndIndex - 1;
+          continue;
         }
       }
 
