@@ -6,19 +6,37 @@ export function PageRefHint(props: {
   onClick: () => void;
   style: CSSProperties;
 }) {
-  // return (
-  //   <Icon
-  //     className="radar-icon"
-  //     icon={"sensor"}
-  //     color="#8F99A8"
-  //     onClick={props.onClick}
-  //   />
-  // );
-  // return <span className="rm-icon-key-prompt radar-icon" onClick={props.onClick}></span>;
-  // return <HintIcon type="quantumLink" size={18} />
+  const [isHovered, setIsHovered] = useState(false);
+  const timerRef = useRef<number>();
+
+  
+  const handleMouseEnter = () => {
+    // setIsHovered(true);
+    clearTimeout(timerRef.current); 
+    timerRef.current = setTimeout(() => {
+      props.onClick();
+    }, 300) as unknown as number;
+
+  };
+  
+  const handleMouseLeave = () => {
+    // setIsHovered(false);
+    clearTimeout(timerRef.current);
+  };
+  
+  const handleAnimationEnd = (event: React.AnimationEvent<HTMLDivElement>) => {
+    if (event.animationName === 'hover-expand') {
+      // 触发动画结束事件
+      const customEvent = new CustomEvent('pageRefHintHoverEnd', {
+        detail: { element: event.currentTarget }
+      });
+      event.currentTarget.dispatchEvent(customEvent);
+      // props.onClick();
+    }
+  };
+
   return (
     <div
-      // icon={<EyeIcon />}
       style={props.style}
       onClickCapture={(e) => {
         props.onClick();
@@ -28,9 +46,10 @@ export function PageRefHint(props: {
       onPointerDown={(e) => {
         e.preventDefault();
       }}
-      className="roam-ref-radar-hint"
-      // minimal
-      // small
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onAnimationEnd={handleAnimationEnd}
+      className={`roam-ref-radar-hint ${isHovered ? 'hovered' : ''}`}
     />
   );
 }

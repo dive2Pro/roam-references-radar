@@ -1,5 +1,5 @@
 import { Popover } from "@blueprintjs/core";
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useState, useRef } from "react";
 import ReactDOM from "react-dom";
 import { Match } from "../AhoCorasick";
 import { newAhoCorasick } from "../allPageSearchEngine";
@@ -106,7 +106,26 @@ function KeywordRadar({
   // console.log({ groupKeywords, blockString, contents }, " ____");
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const hintRef = useRef<HTMLDivElement>(null);
   // console.log({ blockAcResult, isPopoverOpen });
+
+  useEffect(() => {
+    const handlePageRefHintHoverEnd = (event: CustomEvent) => {
+      console.log('PageRefHint hover animation completed:', event.detail);
+      // 这里可以添加动画结束后的处理逻辑
+    };
+
+    const radarElement = data.div.parentElement?.querySelector('.roam-ref-radar');
+    if (radarElement) {
+      radarElement.addEventListener('pageRefHintHoverEnd', handlePageRefHintHoverEnd as EventListener);
+    }
+
+    return () => {
+      if (radarElement) {
+        radarElement.removeEventListener('pageRefHintHoverEnd', handlePageRefHintHoverEnd as EventListener);
+      }
+    };
+  }, [data.div]);
 
   const rect = data.div.getBoundingClientRect();
   // el.style.width = rect.width + "px";
@@ -143,11 +162,7 @@ function KeywordRadar({
             width: isPopoverOpen ? 20 : undefined,
           }}
           onClick={() => {
-            // console.log(` open global`, data, popover);
-            // popover.triggerProps.onClick(data.div);
-            // e.preventDefault();
             setIsPopoverOpen(!isPopoverOpen);
-            // e.stopPropagation();
           }}
         ></PageRefHint>
       </Popover>

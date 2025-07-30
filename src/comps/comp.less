@@ -1,4 +1,4 @@
- .radar-icon {
+.radar-icon {
      cursor: pointer;
      font-size: 0.8em;
      color: #8F99A8;
@@ -128,13 +128,19 @@
  }
 
  .roam-ref-radar-hint {
-    background-color: var(--primary-color);
-    width: 2px;
-    height: 100%;
-    cursor: pointer;
-    opacity: 0.8;
-    transition: width 0.3s ease;
-    &:hover {
-        // width: 20px;
-    }
- }
+   background-color: var(--primary-color);
+   width: 2px;
+   height: 100%;
+   cursor: pointer;
+   opacity: 0.8;
+   transition: width 0.3s ease;
+   
+   &:hover {
+    //    animation: hover-expand 0.3s ease forwards;
+        width: 10px;
+   }
+   
+   &.hovered {
+    //    width: 20px;
+   }
+}

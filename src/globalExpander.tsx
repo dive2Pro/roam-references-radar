@@ -168,32 +168,32 @@ export const Popover = ({
 
   return (
     <div
-      ref={popoverRef}
-      className={`popover-panel ${isOpen ? "open" : ""}`}
-      style={{
-        ...position,
-      }}
-    >
-      <CollapsibleAnimator
-        isOpen={isOpen}
-        onClose={() => {
-          onClose();
-          setClosed(true);
-        }}
-        animationStrategy={createTopRightWaveAnimation({
-          isOpen,
-          easing: "cubic-bezier(0.25, 1, 0.5, 1)",
-          duration: 500,
-        })}
-        // onClose={function (): void {
-        //   // throw new Error("Function not implemented.");
-        //   onClose();
-        // }}
-        // {...position}
-      >
-        {children}
-      </CollapsibleAnimator>
-    </div>
+          ref={popoverRef}
+          className={`popover-panel ${isOpen ? "open" : ""}`}
+          style={{
+            ...position,
+          }}
+        >
+          <CollapsibleAnimator
+            isOpen={isOpen}
+            onClose={() => {
+              onClose();
+              setClosed(true);
+            }}
+            animationStrategy={createTopRightWaveAnimation({
+              isOpen,
+              easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+              duration: 500,
+            })}
+            // onClose={function (): void {
+            //   // throw new Error("Function not implemented.");
+            //   onClose();
+            // }}
+            // {...position}
+          >
+            {children}
+          </CollapsibleAnimator>
+        </div>
     // popoverRoot,
   );
 };
