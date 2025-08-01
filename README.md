@@ -1,8 +1,11 @@
 # Roam References Radar
 
 A Roam Research plugin that helps you discover more potential connections in your knowledge graph by identifying and suggesting relevant references.
+ 
 
-![PixPin_2025-07-25_17-42-07](https://github.com/dive2Pro/roam-references-radar/blob/main/assets/PixPin_2025-07-25_17-42-07.gif)
+
+https://github.com/user-attachments/assets/5727d9dc-5603-4973-ba23-43f41bdb6d5d
+
 
 
 ## Key Functionality
