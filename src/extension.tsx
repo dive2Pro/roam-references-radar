@@ -3,6 +3,7 @@ import {
   onBlockInputChildrenChange,
   onElementIntersection,
 } from "./comps/KeywordRadar";
+import { initConfig } from "./config";
 
 /**
  * 辅助函数：判断两个关键词的范围是否重叠 (无变化)
@@ -181,5 +182,5 @@ function init() {
 
 export function initExtension(extensionAPI: ExtensionAPI) {
   init();
-  
+  initConfig(extensionAPI)
 }

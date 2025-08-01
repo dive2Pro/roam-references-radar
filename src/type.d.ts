@@ -746,7 +746,7 @@ interface RoamAlphaAPI {
 // --- Extension API ---
 
 type PanelAction =
-  | { type: "input"; placeholder?: string }
+  | { type: "input"; placeholder?: string; onChange: (evt: { target: { value: string }}) => void }
   | { type: "switch" }
   | { type: "select"; items: string[] }
   | { type: "button"; text: string; onClick?: () => void }
@@ -761,10 +761,7 @@ interface PanelSetting {
 }
 
 interface PanelConfig {
-  tab: {
-    title: string;
-    // other tab properties can be added here
-  };
+  tabTitle:  string;
   settings: PanelSetting[];
 }
 
