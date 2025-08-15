@@ -4,7 +4,7 @@ import { getIgnoreKeywords } from "./config";
 export let AC: AhoCorasick;
 export const newAhoCorasick = async () => {
   const ignoreKeywordString = getIgnoreKeywords();
-  const ignoreKeywords = extractKeywords(ignoreKeywordString);
+  const ignoreKeywords = extractKeywords(ignoreKeywordString || "");
   
   const allPages = (
     (await window.roamAlphaAPI.data.async.fast.q(`
@@ -28,12 +28,12 @@ export const newAhoCorasick = async () => {
   return ac;
 };
 
-function extractKeywords(text: string) {
+function extractKeywords(text: string = "") {
   const keywords = [];
   let start = 0;
   let depth = 0;
   let currentStart = -1;
-
+  console.log({ text })
   for (let i = 0; i < text.length; i++) {
     if (text[i] === "[" && text[i + 1] === "[") {
       if (depth === 0) {
