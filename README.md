@@ -4,7 +4,7 @@ A Roam Research plugin that helps you discover more potential connections in you
  
 
 
-https://github.com/user-attachments/assets/5727d9dc-5603-4973-ba23-43f41bdb6d5d
+[![](https://github.com/dive2Pro/roam-references-radar/assets/646fa3b0-391d-44cb-9b12-4d8136647843)](https://github.com/user-attachments/assets/5727d9dc-5603-4973-ba23-43f41bdb6d5d)
 
 
 
