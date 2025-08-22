@@ -1,4 +1,4 @@
-import { Popover } from "@blueprintjs/core";
+import { Button, Popover } from "@blueprintjs/core";
 import React, { ReactNode, useEffect, useState, useRef } from "react";
 import ReactDOM from "react-dom";
 import { Match } from "../AhoCorasick";
@@ -103,26 +103,61 @@ function KeywordRadar({
     );
   });
   contents.push(blockString.substring(startIndex));
-  // console.log({ groupKeywords, blockString, contents }, " ____");
+  console.log({ groupKeywords, blockString, contents }, " ____");
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const hintRef = useRef<HTMLDivElement>(null);
-  // console.log({ blockAcResult, isPopoverOpen });
+  startIndex = 0;
+  const allReplaceContents: ReactNode[] = [];
+  let allReplaceContentsBlockString = ``;
+  groupKeywords.forEach((acResultItem) => {
+    allReplaceContents.push(
+      blockString.substring(startIndex, acResultItem.start)
+    );
+    allReplaceContentsBlockString += blockString.substring(
+      startIndex,
+      acResultItem.start
+    );
+    startIndex = acResultItem.end + 1;
 
+    let longestKeyword = "";
+    acResultItem.keywords.forEach((item) => {
+      longestKeyword =
+        item.keyword.length > longestKeyword.length
+          ? item.keyword
+          : longestKeyword;
+    });
+
+    allReplaceContents.push(
+      <span className="radar-highlighter">{`[[${longestKeyword}]]`}</span>
+    );
+    allReplaceContentsBlockString += `[[${longestKeyword}]]`;
+  });
+
+  allReplaceContents.push(blockString.substring(startIndex));
+  allReplaceContentsBlockString += blockString.substring(startIndex);
+
+  const [isPreview, setIsPreview] = useState(false);
   useEffect(() => {
     const handlePageRefHintHoverEnd = (event: CustomEvent) => {
-      console.log('PageRefHint hover animation completed:', event.detail);
+      console.log("PageRefHint hover animation completed:", event.detail);
       // 这里可以添加动画结束后的处理逻辑
     };
 
-    const radarElement = data.div.parentElement?.querySelector('.roam-ref-radar');
+    const radarElement =
+      data.div.parentElement?.querySelector(".roam-ref-radar");
     if (radarElement) {
-      radarElement.addEventListener('pageRefHintHoverEnd', handlePageRefHintHoverEnd as EventListener);
+      radarElement.addEventListener(
+        "pageRefHintHoverEnd",
+        handlePageRefHintHoverEnd as EventListener
+      );
     }
 
     return () => {
       if (radarElement) {
-        radarElement.removeEventListener('pageRefHintHoverEnd', handlePageRefHintHoverEnd as EventListener);
+        radarElement.removeEventListener(
+          "pageRefHintHoverEnd",
+          handlePageRefHintHoverEnd as EventListener
+        );
       }
     };
   }, [data.div]);
@@ -147,9 +182,32 @@ function KeywordRadar({
               // paddingRight: 10,
               // height: rect.height,
               // left: rect.left + 20,
+              position: "relative",
             }}
           >
-            {contents}
+            {isPreview ? allReplaceContents : contents}
+            {contents.length > 3 ? (
+              <>
+                <LinkAll
+                  onCancel={() => setIsPreview(false)}
+                  onPreview={() => setIsPreview(true)}
+                  isPreview={isPreview}
+                  onConfirm={() => {
+                    // setIsPreview(false);
+                    console.log({
+                      allReplaceContentsBlockString,
+                    });
+                    window.roamAlphaAPI.data.block.update({
+                      block: {
+                        uid: data.block[":block/uid"],
+                        string: allReplaceContentsBlockString,
+                      },
+                    });
+                    setIsPreview(false);
+                  }}
+                ></LinkAll>
+              </>
+            ) : null}
           </div>
         }
         isOpen={isPopoverOpen}
@@ -167,6 +225,42 @@ function KeywordRadar({
         ></PageRefHint>
       </Popover>
     </>
+  );
+}
+
+function LinkAll(props: {
+  onPreview(): unknown;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isPreview: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "flex-end",
+      }}
+    >
+      {props.isPreview ? (
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button small intent="success" onClick={() => props.onConfirm()}>
+            Confirm
+          </Button>
+          <Button small onClick={() => props.onCancel()}>
+            Cancel
+          </Button>
+        </div>
+      ) : (
+        <Button
+          small
+          onClick={() => {
+            props.onPreview();
+          }}
+        >
+          Link All Preview
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -227,17 +321,17 @@ const triggerModifyDom = debounce(async () => {
   // console.log({ allBlocks });
 
   const result = allBlocks
-  // 注释的原因是: 当 block  字符串被清空时, 会导致 radar 不消失.
+    // 注释的原因是: 当 block  字符串被清空时, 会导致 radar 不消失.
     // .filter((block) => {
-      // const div = elementUidMap[block[":block/uid"]].div;
-      // const el = div.parentElement.querySelector(".roam-ref-radar");
-      // if (el) {
-      //   // ReactDom.unmountComponentAtNode(el);
-      //   // el.remove();
-      // }
+    // const div = elementUidMap[block[":block/uid"]].div;
+    // const el = div.parentElement.querySelector(".roam-ref-radar");
+    // if (el) {
+    //   // ReactDom.unmountComponentAtNode(el);
+    //   // el.remove();
+    // }
     //   return block?.[":block/string"];
     // })
-    .filter(block => block)
+    .filter((block) => block)
     .map((block) => {
       const blockAcResult = ac.search(block?.[":block/string"] || "", false);
       const result = {
