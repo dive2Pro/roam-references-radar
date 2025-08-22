@@ -18,10 +18,18 @@ A Roam Research plugin that helps you discover more potential connections in you
 
 4. **Multiple Reference Links**: For each identified keyword, the popover displays multiple possible reference links, allowing you to select the most relevant connection for your knowledge graph.
 
+5. **Link All Feature**: The "Link All Preview" button allows you to preview and apply all suggested reference links at once, saving time when multiple keywords are found in a single block.
+
+6. **Keyword Filtering**: You can configure keywords to ignore in the plugin settings, preventing specific pages from appearing in reference suggestions.
+
 
 ### Usage Tips
 
 **Page Recognition Rules**: The plugin automatically identifies pages in your Roam graph but filters out pages with overly short titles (such as single characters) to ensure more accurate and useful connection recommendations.
+
+**Link All Feature**: Click the "Link All Preview" button in the popover to see a preview of all keywords converted to reference links at once. Review the changes and click "Confirm" to apply all links, or "Cancel" to revert.
+
+**Keyword Filtering**: Access plugin settings to add ignore keywords in the format `[[keyword1]],[[keyword2]]`. Pages with these keywords in their titles will be excluded from reference suggestions.
 
 
 ## Installation
