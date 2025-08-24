@@ -239,6 +239,7 @@ function LinkAll(props: {
       style={{
         display: "flex",
         justifyContent: "flex-end",
+        paddingRight: 6
       }}
     >
       {props.isPreview ? (
