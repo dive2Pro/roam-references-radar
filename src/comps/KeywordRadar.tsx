@@ -128,7 +128,14 @@ function KeywordRadar({
     });
 
     allReplaceContents.push(
-      <span className="radar-highlighter">{`[[${longestKeyword}]]`}</span>
+      <span>
+        <span className="rm-page-ref__brackets">[[</span>
+        <span className="rm-page-ref rm-page-ref--link">
+          {longestKeyword}
+        </span>
+        <span className="rm-page-ref__brackets">]]</span>
+      </span>
+      // <span className="radar-highlighter">{`[[${longestKeyword}]]`}</span>
     );
     allReplaceContentsBlockString += `[[${longestKeyword}]]`;
   });
@@ -239,7 +246,8 @@ function LinkAll(props: {
       style={{
         display: "flex",
         justifyContent: "flex-end",
-        paddingRight: 6
+        paddingRight: 6,
+        paddingTop: 6,
       }}
     >
       {props.isPreview ? (
