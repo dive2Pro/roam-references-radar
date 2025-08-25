@@ -144,6 +144,10 @@ function KeywordRadar({
   allReplaceContentsBlockString += blockString.substring(startIndex);
 
   const [isPreview, setIsPreview] = useState(false);
+
+  if(!isPopoverOpen && isPreview) {
+    setIsPreview(false)
+  }
   useEffect(() => {
     const handlePageRefHintHoverEnd = (event: CustomEvent) => {
       console.log("PageRefHint hover animation completed:", event.detail);
