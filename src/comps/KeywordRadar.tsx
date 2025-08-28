@@ -190,6 +190,7 @@ function KeywordRadar({
               width: rect.width - 10,
               // top: rect.top,
               paddingLeft: 10,
+              paddingRight: 10,
               // paddingRight: 10,
               // height: rect.height,
               // left: rect.left + 20,
@@ -250,7 +251,6 @@ function LinkAll(props: {
       style={{
         display: "flex",
         justifyContent: "flex-end",
-        paddingRight: 6,
         paddingTop: 6,
       }}
     >

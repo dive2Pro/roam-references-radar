@@ -1,4 +1,5 @@
 import { Menu, MenuItem, Popover } from "@blueprintjs/core";
+import { ReactNode, useState } from "react";
 
 export function BlockKeyword({
   data,
@@ -11,6 +12,20 @@ export function BlockKeyword({
   blockString: string;
   onChange: (v: string) => void;
 }) {
+  // const [content, setContent] = useState<ReactNode[]>([data.text]);
+  const [active, setActive] = useState<Keyword>();
+  let content: ReactNode[] = [data.text];
+  if (active) {
+    content = [<span>{data.text.substring(0, active.startIndex)}</span>];
+    content.push(
+      <span>
+        <span className="rm-page-ref__brackets">[[</span>
+        <span className="rm-page-ref rm-page-ref--link">{active.keyword}</span>
+        <span className="rm-page-ref__brackets">]]</span>
+      </span>
+    );
+    content.push(<span>{data.text.substring(active.endIndex + 1)}</span>);
+  }
   return (
     // @ts-ignore
     <Popover
@@ -63,6 +78,13 @@ export function BlockKeyword({
               <MenuItem
                 text={`[[${keywordItem.keyword}]]`}
                 icon="git-new-branch"
+                onMouseEnter={() => {
+                  setActive(keywordItem);
+                }}
+                onMouseLeave={() => {
+                  console.log("leave - ", keywordItem);
+                  setActive(undefined);
+                }}
                 onClick={() => {
                   /**
                    * 1. 更新数据源
@@ -88,7 +110,7 @@ export function BlockKeyword({
       }
       captureDismiss
     >
-      <span className="radar-highlighter">{data.text}</span>
+      <span className="radar-highlighter">{content}</span>
     </Popover>
   );
 }

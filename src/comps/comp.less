@@ -1,146 +1,149 @@
 .radar-icon {
-     cursor: pointer;
-     font-size: 0.8em;
-     color: #8F99A8;
-     background-image: url('data:image/svg+xml, %3Csvg%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%0A%20%20%3Ccircle%20cx%3D%227%22%20cy%3D%2212%22%20r%3D%221.5%22%20fill%3D%22currentColor%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2217%22%20cy%3D%2212%22%20r%3D%221.5%22%20fill%3D%22currentColor%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M7%2012h10%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%0A%20%20%20%20%20%20%20%20stroke-dasharray%3D%222%204%22%3E%0A%20%20%20%20%3Canimate%20attributeName%3D%22stroke-dashoffset%22%20values%3D%220%3B-6%22%20dur%3D%221.2s%22%20repeatCount%3D%22indefinite%22%2F%3E%0A%20%20%3C%2Fpath%3E%0A%20%20%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%222%22%20fill%3D%22currentColor%22%20fill-opacity%3D%220%22%3E%0A%20%20%20%20%3Canimate%20attributeName%3D%22fill-opacity%22%20values%3D%220%3B1%3B0%22%20dur%3D%221.2s%22%20repeatCount%3D%22indefinite%22%2F%3E%0A%20%20%3C%2Fcircle%3E%0A%3C%2Fsvg%3E');
- }
+    cursor: pointer;
+    font-size: 0.8em;
+    color: #8F99A8;
+    background-image: url('data:image/svg+xml, %3Csvg%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%0A%20%20%3Ccircle%20cx%3D%227%22%20cy%3D%2212%22%20r%3D%221.5%22%20fill%3D%22currentColor%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2217%22%20cy%3D%2212%22%20r%3D%221.5%22%20fill%3D%22currentColor%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M7%2012h10%22%20stroke%3D%22currentColor%22%20stroke-width%3D%221.5%22%0A%20%20%20%20%20%20%20%20stroke-dasharray%3D%222%204%22%3E%0A%20%20%20%20%3Canimate%20attributeName%3D%22stroke-dashoffset%22%20values%3D%220%3B-6%22%20dur%3D%221.2s%22%20repeatCount%3D%22indefinite%22%2F%3E%0A%20%20%3C%2Fpath%3E%0A%20%20%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%222%22%20fill%3D%22currentColor%22%20fill-opacity%3D%220%22%3E%0A%20%20%20%20%3Canimate%20attributeName%3D%22fill-opacity%22%20values%3D%220%3B1%3B0%22%20dur%3D%221.2s%22%20repeatCount%3D%22indefinite%22%2F%3E%0A%20%20%3C%2Fcircle%3E%0A%3C%2Fsvg%3E');
+}
 
- #bridge .simple-state {
-     animation: subtle-float 3s infinite ease-in-out;
- }
+#bridge .simple-state {
+    animation: subtle-float 3s infinite ease-in-out;
+}
 
- #bridge .complex-state .bridge-arch {
-     stroke-dasharray: 30;
-     stroke-dashoffset: 30;
- }
+#bridge .complex-state .bridge-arch {
+    stroke-dasharray: 30;
+    stroke-dashoffset: 30;
+}
 
- #bridge:hover .simple-state .dot-l {
-     transform: translateX(-7px);
- }
+#bridge:hover .simple-state .dot-l {
+    transform: translateX(-7px);
+}
 
- #bridge:hover .simple-state .dot-r {
-     transform: translateX(7px);
- }
+#bridge:hover .simple-state .dot-r {
+    transform: translateX(7px);
+}
 
- #bridge:hover .complex-state .bridge-arch {
-     stroke-dashoffset: 0;
-     transition-delay: 0.1s;
- }
+#bridge:hover .complex-state .bridge-arch {
+    stroke-dashoffset: 0;
+    transition-delay: 0.1s;
+}
 
- svg path,
- svg circle,
- svg line,
- svg polyline {
-     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
- }
+svg path,
+svg circle,
+svg line,
+svg polyline {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
- .kw-click-portal {
-     display: inline-block;
-     background: linear-gradient(135deg, #f3d9fa, #dbe4ff);
-     padding: 2px 6px;
-     border-radius: 4px;
-     box-shadow: inset 0 0 0 0 rgba(0, 0, 0, 0.1);
-     transition: all 0.3s ease;
- }
+.kw-click-portal {
+    display: inline-block;
+    background: linear-gradient(135deg, #f3d9fa, #dbe4ff);
+    padding: 2px 6px;
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
 
- .kw-click-portal:hover {
-     transform: scale(1.05);
-     box-shadow: inset 0 0 10px 0 rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.1);
-     color: #5f3dc4;
- }
+.kw-click-portal:hover {
+    transform: scale(1.05);
+    box-shadow: inset 0 0 10px 0 rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.1);
+    color: #5f3dc4;
+}
 
- .block-keyword {
-     position: relative;
-     cursor: pointer;
+.block-keyword {
+    position: relative;
+    cursor: pointer;
 
-     &::before {
-         height: 3px;
-         border-radius: 20px;
-         transform: scale3d(1, 1, 1);
-         transition: transform 0.2s, opacity 0.2s;
-         transition-timing-function: cubic-bezier(0.2, 0.57, 0.67, 1.53);
-         content: "";
-         position: absolute;
-         width: 100%;
-         background: currentColor;
-         top: 100%;
-         left: 0;
-         pointer-events: none;
-     }
+    &::before {
+        height: 3px;
+        border-radius: 20px;
+        transform: scale3d(1, 1, 1);
+        transition: transform 0.2s, opacity 0.2s;
+        transition-timing-function: cubic-bezier(0.2, 0.57, 0.67, 1.53);
+        content: "";
+        position: absolute;
+        width: 100%;
+        background: currentColor;
+        top: 100%;
+        left: 0;
+        pointer-events: none;
+    }
 
-     &:hover:before {
-         transition-timing-function: cubic-bezier(0.8, 0, 0.1, 1);
-         transition-duration: 0.4s;
-         opacity: 1;
-         transform: scale3d(1.2, 0.1, 1);
-     }
- }
+    &:hover:before {
+        transition-timing-function: cubic-bezier(0.8, 0, 0.1, 1);
+        transition-duration: 0.4s;
+        opacity: 1;
+        transform: scale3d(1.2, 0.1, 1);
+    }
+}
 
- /* 10. 括号术语 (Bracketed Term) */
- .kw-bracketed {
-     color: #be4bdb;
-     font-weight: 600;
- }
+/* 10. 括号术语 (Bracketed Term) */
+.kw-bracketed {
+    color: #be4bdb;
+    font-weight: 600;
+}
 
- .kw-bracketed::before {
-     content: '«';
-     margin-right: 4px;
-     opacity: 0.6;
- }
+.kw-bracketed::before {
+    content: '«';
+    margin-right: 4px;
+    opacity: 0.6;
+}
 
- .kw-bracketed::after {
-     content: '»';
-     margin-left: 4px;
-     opacity: 0.6;
- }
+.kw-bracketed::after {
+    content: '»';
+    margin-left: 4px;
+    opacity: 0.6;
+}
 
 
- .radar-highlighter {
-     cursor: pointer;
-     position: relative;
-     text-decoration: none;
- }
+.radar-highlighter {
+    cursor: pointer;
+    position: relative;
+    text-decoration: none;
+    //  display: inline-block;
+    background-image: linear-gradient(to top, #137cbdaa 3px, transparent 3px);
+    background-repeat: no-repeat;
+    background-size: 100% 5px;
+    background-position: bottom;
+    transition: all 0.4s ease;
+}
 
- .radar-highlighter::before {
-     content: '';
-     background-color: #137cbdaa;
-     position: absolute;
-     left: 0;
-     bottom: 0px;
-     width: 100%;
-     height: 4px;
-     transition: all .3s ease-in-out;
- }
 
- .radar-highlighter:hover::before {
-     bottom: 0;
-     height: 100%;
- }
+.radar-highlighter:hover {
+    background-size: 100% 100%;
+    background-image: linear-gradient(to top, #137cbdaa, transparent);
+    transform: translateY(-5px);
+}
 
- .radar-highlighter2 {
-     background: linear-gradient(to top, #ffeaa7 20%, transparent 40%);
-     padding: 0 2px;
-     transition: background 0.3s ease;
- }
+.radar-highlighter2 {
+    background: linear-gradient(to top, #ffeaa7 20%, transparent 40%);
+    padding: 0 2px;
+    transition: background 0.3s ease;
+}
 
- .radar-highlighter2:hover {
-     background: linear-gradient(to top, #ffeaa7 100%, transparent 40%);
- }
+.radar-highlighter2:hover {
+    background: linear-gradient(to top, #ffeaa7 100%, transparent 40%);
+}
 
- .roam-ref-radar-hint {
-   background-color: var(--primary-color);
-   width: 2px;
-   height: 100%;
-   cursor: pointer;
-   opacity: 0.8;
-   transition: width 0.3s ease;
-   
-   &:hover {
-    //    animation: hover-expand 0.3s ease forwards;
+.roam-ref-radar-hint {
+    background-color: var(--primary-color);
+    width: 2px;
+    height: 100%;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: width 0.3s ease;
+
+    &:hover {
+        //    animation: hover-expand 0.3s ease forwards;
         width: 10px;
-   }
-   
-   &.hovered {
-    //    width: 20px;
-   }
+    }
+
+    &.hovered {
+        //    width: 20px;
+    }
+}
+
+.roam-ref-radar-popover {
+    span.bp3-popover-target {
+        display: inline;
+    }
 }
