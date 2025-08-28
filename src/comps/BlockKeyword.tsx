@@ -32,6 +32,7 @@ export function BlockKeyword({
       interactionKind="hover"
       autoFocus={false}
       popoverClassName="roam-ref-radar-popover"
+      targetClassName="roam-ref-radar-popover-target"
       openOnTargetFocus={false}
       content={
         <Menu className="roam-ref-radar-menu">
@@ -74,6 +75,7 @@ export function BlockKeyword({
             }}
           /> */}
           {data.keywords.map((keywordItem) => {
+            
             return (
               <MenuItem
                 text={`[[${keywordItem.keyword}]]`}

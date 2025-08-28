@@ -130,9 +130,7 @@ function KeywordRadar({
     allReplaceContents.push(
       <span>
         <span className="rm-page-ref__brackets">[[</span>
-        <span className="rm-page-ref rm-page-ref--link">
-          {longestKeyword}
-        </span>
+        <span className="rm-page-ref rm-page-ref--link">{longestKeyword}</span>
         <span className="rm-page-ref__brackets">]]</span>
       </span>
       // <span className="radar-highlighter">{`[[${longestKeyword}]]`}</span>
@@ -145,8 +143,8 @@ function KeywordRadar({
 
   const [isPreview, setIsPreview] = useState(false);
 
-  if(!isPopoverOpen && isPreview) {
-    setIsPreview(false)
+  if (!isPopoverOpen && isPreview) {
+    setIsPreview(false);
   }
   useEffect(() => {
     const handlePageRefHintHoverEnd = (event: CustomEvent) => {
@@ -360,7 +358,9 @@ const triggerModifyDom = debounce(async () => {
         uid: block[":block/uid"],
         elements: [
           ...document.querySelectorAll(`div[id*="${block[":block/uid"]}"]`),
-        ] as HTMLElement[],
+        ]
+          // 过滤掉侧边栏
+          .filter((item) => item.id.startsWith("block-input")) as HTMLElement[],
       };
 
       observers.emit(block[":block/uid"], result);
