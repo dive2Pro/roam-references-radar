@@ -256,12 +256,17 @@ function LinkAll(props: {
     >
       {props.isPreview ? (
         <div style={{ display: "flex", gap: 8 }}>
-          <Button small intent="success" onClick={() => props.onConfirm()}>
-            Confirm
-          </Button>
-          <Button small onClick={() => props.onCancel()}>
-            Cancel
-          </Button>
+          <Button
+            small
+            icon="small-tick"
+            intent="success"
+            onClick={() => props.onConfirm()}
+          ></Button>
+          <Button
+            small
+            icon="small-cross"
+            onClick={() => props.onCancel()}
+          ></Button>
         </div>
       ) : (
         <Button
@@ -269,8 +274,10 @@ function LinkAll(props: {
           onClick={() => {
             props.onPreview();
           }}
+          icon="search-around"
+          intent="primary"
         >
-          Link All Preview
+          Preview
         </Button>
       )}
     </div>
