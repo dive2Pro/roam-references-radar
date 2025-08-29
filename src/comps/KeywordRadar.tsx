@@ -361,6 +361,9 @@ const triggerModifyDom = debounce(async () => {
         ]
           // 过滤掉侧边栏
           .filter((item) => item.id.startsWith("block-input")) as HTMLElement[],
+        rescan: () => {
+
+        }
       };
 
       observers.emit(block[":block/uid"], result);
