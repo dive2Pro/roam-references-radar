@@ -16,7 +16,7 @@ export function BlockKeyword({
   const [active, setActive] = useState<Keyword>();
   let content: ReactNode[] = [data.text];
   if (active) {
-    content = [<span>{data.text.substring(0, active.startIndex)}</span>];
+    content = [<span>{data.text.substring(0,  active.startIndex - data.start )}</span>];
     content.push(
       <span>
         <span className="rm-page-ref__brackets">[[</span>
@@ -24,7 +24,7 @@ export function BlockKeyword({
         <span className="rm-page-ref__brackets">]]</span>
       </span>
     );
-    content.push(<span>{data.text.substring(active.endIndex + 1)}</span>);
+    content.push(<span>{data.text.substring(active.endIndex + 1 - data.start)}</span>);
   }
   return (
     // @ts-ignore

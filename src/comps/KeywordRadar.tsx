@@ -106,6 +106,7 @@ function KeywordRadar({
   console.log({ groupKeywords, blockString, contents }, " ____");
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  // 找出最长的 keyword
   startIndex = 0;
   const allReplaceContents: ReactNode[] = [];
   let allReplaceContentsBlockString = ``;
@@ -117,16 +118,17 @@ function KeywordRadar({
       startIndex,
       acResultItem.start
     );
-    startIndex = acResultItem.end + 1;
+    // startIndex = acResultItem.end + 1;
 
     let longestKeyword = "";
     acResultItem.keywords.forEach((item) => {
-      longestKeyword =
-        item.keyword.length > longestKeyword.length
-          ? item.keyword
-          : longestKeyword;
+      if(item.keyword.length >= longestKeyword.length) {
+        longestKeyword = item.keyword;
+        startIndex = item.endIndex + 1;
+      }
     });
 
+    console.log({ longestKeyword, allReplaceContentsBlockString, acResultItem, startIndex })
     allReplaceContents.push(
       <span>
         <span className="rm-page-ref__brackets">[[</span>
