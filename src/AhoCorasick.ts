@@ -107,42 +107,6 @@ export class AhoCorasick {
   }
 
   /**
-   * 检查给定的前缀字符串是否包含有效的 Markdown 格式。
-   * @param prefix 要检查的字符串。
-   * @returns 如果包含格式化，则为 true。
-   */
-  private isPrefixFormatted(prefix: string): boolean {
-    // 1. 检查是否存在任何非对称标记
-    if (
-      AhoCorasick.UNPAIRED_MD_MARKERS.some((marker) => prefix.includes(marker))
-    ) {
-      return true;
-    }
-
-    // 2. 检查是否存在任何完整的、对称的标记对
-    for (const pair of AhoCorasick.PAIRED_MD_MARKERS) {
-      const startIndex = prefix.indexOf(pair.start);
-
-      // 如果找到了开始标记
-      if (startIndex !== -1) {
-        // 从开始标记之后的位置，查找结束标记
-        const endIndex = prefix.indexOf(
-          pair.end,
-          startIndex + pair.start.length
-        );
-
-        // 如果也找到了结束标记，那么就确认存在格式化
-        if (endIndex !== -1) {
-          return true;
-        }
-      }
-    }
-
-    // 如果所有检查都未通过，则认为不包含格式化
-    return false;
-  }
-
-  /**
    * 在文本中搜索关键词，支持过滤和全词匹配。
    * @param text 要搜索的文本。
    * @param wholeWordOnly 如果为 true，则只匹配完整的西文单词。默认为 true。
