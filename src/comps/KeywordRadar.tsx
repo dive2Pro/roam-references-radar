@@ -7,6 +7,7 @@ import { groupKeywordsWithText } from "../extension";
 import { debounce } from "../utils";
 import { BlockKeyword } from "./BlockKeyword";
 import { PageRefHint } from "./Hint";
+import { getIgnoreNotCompletedMatches } from "../config";
 
 // 1. 每次进入视口中的 block , 雷达扫描一次.
 // 2. 撤销和反撤销, 根据影响到的 div , 触发雷达扫描
@@ -198,7 +199,7 @@ function KeywordRadar({
             }}
           >
             {isPreview ? allReplaceContents : contents}
-            {contents.length > 3 ? (
+            {contents.length > 0 ? (
               <>
                 <LinkAll
                   onCancel={() => setIsPreview(false)}
@@ -353,7 +354,7 @@ const triggerModifyDom = debounce(async () => {
     // })
     .filter((block) => block)
     .map((block) => {
-      const blockAcResult = ac.search(block?.[":block/string"] || "", false);
+      const blockAcResult = ac.search(block?.[":block/string"] || "", getIgnoreNotCompletedMatches());
       const result = {
         block,
         blockAcResult,

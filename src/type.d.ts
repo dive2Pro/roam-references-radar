@@ -747,7 +747,7 @@ interface RoamAlphaAPI {
 
 type PanelAction =
   | { type: "input"; placeholder?: string; onChange: (evt: { target: { value: string }}) => void }
-  | { type: "switch" }
+  | { type: "switch"; onChange: (evt: { target: { checked: boolean }}) => void }
   | { type: "select"; items: string[] }
   | { type: "button"; text: string; onClick?: () => void }
   | { [key: string]: any }; // For custom action types

@@ -148,7 +148,7 @@ export class AhoCorasick {
    * @param wholeWordOnly 如果为 true，则只匹配完整的西文单词。默认为 true。
    * @returns 匹配结果的数组。
    */
-  public search(text: string, wholeWordOnly: boolean = true): Match[] {
+  public search(text: string, wholeWordOnly: boolean): Match[] {
     const results: Match[] = [];
     let currentNode = this.root;
     let activeFilterEndMarker: string | null = null;
@@ -181,6 +181,7 @@ export class AhoCorasick {
       { start: "((", end: "))" },
       { start: "{{", end: "}}" },
       { start: "```", end: "```" },
+      { start: '`', end: '`' },
     ];
 
     // *** 步骤 0: 更新后的前缀-`::` 过滤器 ***

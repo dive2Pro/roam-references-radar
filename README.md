@@ -6,7 +6,12 @@ A Roam Research plugin that helps you discover more potential connections in you
 
 [![](https://raw.githubusercontent.com/dive2Pro/roam-references-radar/refs/heads/main/assets/demo.png)](https://github.com/user-attachments/assets/5727d9dc-5603-4973-ba23-43f41bdb6d5d)
 
+## ChangeLog
 
+- **2025-10-21**
+  - **Added:** New configuration option to ignore incomplete matches.
+  - **Improved:** Matching logic now excludes content within inline code blocks.
+  - **Changed:** Relaxed the restriction for the "Preview all" feature; it now activates when there is more than 0 match.
 
 ## Key Functionality
 

@@ -17,11 +17,27 @@ export function initConfig(extensionAPI: ExtensionAPI) {
                     }
 
                 }
-            }
+            },
+            {
+                id: "ignore-not-completed-matches",
+                name: "Ignore Not Completed Matches",
+                description: "",
+                action: {
+                    type: 'switch',
+                    onChange: (evt: { target: HTMLInputElement }) => {
+                        console.log({ evt })
+                        extensionAPI.settings.set("ignore-not-completed-matches", evt.target.checked);
+                    }
+                }
+            },
         ]
     })
 }
 
 export function getIgnoreKeywords() {
     return _extensionAPI.settings.get("ignore-keywords");
+}
+
+export function getIgnoreNotCompletedMatches() {
+    return _extensionAPI.settings.get("ignore-not-completed-matches");
 }
