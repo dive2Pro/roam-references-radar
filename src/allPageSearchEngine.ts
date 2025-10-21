@@ -1,5 +1,5 @@
 import { AhoCorasick } from "./AhoCorasick";
-import { getIgnoreKeywords } from "./config";
+import { getCaseInsensitive, getIgnoreKeywords } from "./config";
 
 export let AC: AhoCorasick;
 export const newAhoCorasick = async () => {
@@ -23,7 +23,7 @@ export const newAhoCorasick = async () => {
         title.toLowerCase().includes(keyword.toLowerCase())
       );
     });
-  const ac = new AhoCorasick(allPages.map((page) => page[":node/title"]));
+  const ac = new AhoCorasick(allPages.map((page) => page[":node/title"]), getCaseInsensitive());
   AC = ac;
   return ac;
 };

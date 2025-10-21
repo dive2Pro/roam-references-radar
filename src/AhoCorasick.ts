@@ -25,11 +25,7 @@ export class AhoCorasick {
     "#",
     ">",
     "```",
-    // "`",
     "\n",
-    // "- ",
-    // "+ ",
-    // "* ", // 列表项需要后面的空格来区分
   ];
 
   // 对称标记：必须成对出现才算格式化
@@ -45,8 +41,16 @@ export class AhoCorasick {
       { start: "_", end: "_" }, // 单下划线斜体
       { start: "`", end: "`" },
     ];
-  constructor(keywords: string[]) {
+  private readonly caseSensitive: boolean;
+
+  /**
+   * 构造函数
+   * @param keywords 要搜索的关键词列表
+   * @param caseSensitive 是否区分大小写，默认为 true
+   */
+  constructor(keywords: string[], caseSensitive: boolean = true) {
     this.root = new AhoCorasickNode();
+    this.caseSensitive = caseSensitive;
     const uniqueKeywords = [...new Set(keywords.filter((kw) => kw.length > 0))];
     if (uniqueKeywords.length > 0) {
       this.buildTrie(uniqueKeywords);
@@ -57,35 +61,48 @@ export class AhoCorasick {
   private buildTrie(keywords: string[]): void {
     for (const keyword of keywords) {
       let currentNode = this.root;
-      for (const char of keyword) {
+      // 根据是否区分大小写来处理关键词
+      const processedKeyword = this.caseSensitive
+        ? keyword
+        : keyword.toLowerCase();
+      for (const char of processedKeyword) {
         if (!currentNode.children.has(char)) {
           currentNode.children.set(char, new AhoCorasickNode());
         }
         currentNode = currentNode.children.get(char)!;
       }
+      // 在 output 中存储原始关键词
       currentNode.output.push(keyword);
     }
   }
 
   private buildFailureLinks(): void {
     const queue: AhoCorasickNode[] = [];
-    this.root.failureLink = this.root;
+    this.root.failureLink = this.root; // 根节点的失败链接是其自身
+
+    // 处理根节点的所有子节点
     for (const node of this.root.children.values()) {
       node.failureLink = this.root;
       queue.push(node);
     }
+
+    // 使用广度优先搜索（BFS）构建失败链接
     while (queue.length > 0) {
       const currentNode = queue.shift()!;
       for (const [char, childNode] of currentNode.children.entries()) {
         let failureNode = currentNode.failureLink!;
+        // 沿着失败链接向上查找，直到找到一个有相同字符子节点的节点或到达根节点
         while (!failureNode.children.has(char) && failureNode !== this.root) {
           failureNode = failureNode.failureLink!;
         }
+
         if (failureNode.children.has(char)) {
           childNode.failureLink = failureNode.children.get(char)!;
         } else {
           childNode.failureLink = this.root;
         }
+
+        // 将失败链接节点的输出合并到当前子节点的输出中
         childNode.output.push(...childNode.failureLink.output);
         queue.push(childNode);
       }
@@ -98,12 +115,10 @@ export class AhoCorasick {
    * @returns 如果是单词边界，则为 true。
    */
   private isWordBoundary(char: string | undefined): boolean {
-    // 字符串的开头/结尾是边界
     if (char === undefined) {
-      return true;
+      return true; // 字符串的开头/结尾是边界
     }
-    // 非字母字符是边界
-    return !AhoCorasick.IS_LETTER_REGEX.test(char);
+    return !AhoCorasick.IS_LETTER_REGEX.test(char); // 非字母字符是边界
   }
 
   /**
@@ -118,26 +133,19 @@ export class AhoCorasick {
     let activeFilterEndMarker: string | null = null;
     let loopStartIndex = 0;
 
-    // *** 新的、更精确的 Markdown 标记列表 ***
-    // 这些是明确表示格式化开始的字符串
     const MD_FORMAT_MARKERS: string[] = [
       "[[",
       "((",
-      "{{", // 双括号
+      "{{",
       "**",
       "__",
-      "~~", // 强调/删除线
+      "~~",
       "```",
-      "`", // 代码
+      "`",
       "#",
-      ">", // 标题/引用
-      "![", // 图片
-      // "\n", // 换行符本身也是格式化
-      // "- ",
-      // "+ ",
-      // "* ", // 列表项 (注意后面的空格)
+      ">",
+      "![",
     ];
-
     const IS_WHITESPACE_REGEX = /\s/;
     const IS_VALID_TAG_CHAR_REGEX = /[a-zA-Z0-9\p{Script=Han}._-]/u;
     const symmetricFilters = [
@@ -145,25 +153,21 @@ export class AhoCorasick {
       { start: "((", end: "))" },
       { start: "{{", end: "}}" },
       { start: "```", end: "```" },
-      { start: '`', end: '`' },
+      { start: "`", end: "`" },
     ];
 
-    // *** 步骤 0: 更新后的前缀-`::` 过滤器 ***
+    // 步骤 0: 更新后的前缀-`::` 过滤器
     const firstColonIndex = text.indexOf("::");
     if (firstColonIndex !== -1) {
       const prefix = text.substring(0, firstColonIndex);
-      // 检查前缀中是否包含任何一个明确的 Markdown 标记
       const hasFormatting = MD_FORMAT_MARKERS.some((marker) =>
         prefix.includes(marker)
       );
-
-      // 如果不包含任何标记 (是纯文本)，则跳过这部分
       if (!hasFormatting) {
         loopStartIndex = firstColonIndex + 2;
       }
     }
 
-    // 主循环及后续所有逻辑保持不变...
     for (let i = loopStartIndex; i < text.length; i++) {
       // 步骤 1 & 2: 处理常规过滤块
       if (activeFilterEndMarker) {
@@ -193,7 +197,6 @@ export class AhoCorasick {
         if (closeBracketIndex > -1 && text[closeBracketIndex + 1] === "(") {
           const closeParenIndex = text.indexOf(")", closeBracketIndex + 2);
           if (closeParenIndex !== -1) {
-            // 找到了完整的图片链接，跳过整个结构
             i = closeParenIndex;
             continue;
           }
@@ -206,7 +209,6 @@ export class AhoCorasick {
         if (closeBracketIndex > -1 && text[closeBracketIndex + 1] === "(") {
           const closeParenIndex = text.indexOf(")", closeBracketIndex + 2);
           if (closeParenIndex > -1) {
-            // 找到了一个完整的链接，跳过整个结构
             i = closeParenIndex;
             continue;
           }
@@ -216,7 +218,6 @@ export class AhoCorasick {
       // 步骤 2.3: 检查并跳过裸露的 URL
       if (text.startsWith("https://", i) || text.startsWith("http://", i)) {
         let urlEndIndex = i;
-        // 扫描直到遇到空白字符或文本结尾
         while (
           urlEndIndex < text.length &&
           !IS_WHITESPACE_REGEX.test(text[urlEndIndex])
@@ -224,7 +225,6 @@ export class AhoCorasick {
           urlEndIndex++;
         }
         if (urlEndIndex > i) {
-          // 跳过整个 URL
           i = urlEndIndex - 1;
           continue;
         }
@@ -249,7 +249,9 @@ export class AhoCorasick {
       }
 
       // 步骤 3 & 4: AC 匹配和结果处理
-      const char = text[i];
+      // 根据是否区分大小写来处理当前字符
+      const char = this.caseSensitive ? text[i] : text[i].toLowerCase();
+
       while (!currentNode.children.has(char) && currentNode !== this.root) {
         currentNode = currentNode.failureLink!;
       }

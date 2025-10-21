@@ -30,8 +30,30 @@ export function initConfig(extensionAPI: ExtensionAPI) {
                     }
                 }
             },
+            {
+                // case insensitive
+                id: "case-insensitive",
+                name: "Case Insensitive",
+                description: "",
+                action: {
+                    type: 'switch',
+                    onChange: (evt: { target: HTMLInputElement }) => {
+                        extensionAPI.settings.set("case-insensitive", evt.target.checked);
+                    }
+                }   
+            }
         ]
     })
+    // 如果 case-insensitive 未设置，则默认初始化 case-insensitive 为 true
+    if (_extensionAPI.settings.get("case-insensitive") === null) {
+        _extensionAPI.settings.set("case-insensitive", true);
+        
+    }
+    console.log({ caseInsensitive: getCaseInsensitive() })
+}
+
+export function getCaseInsensitive() {
+    return _extensionAPI.settings.get("case-insensitive");
 }
 
 export function getIgnoreKeywords() {

@@ -10,6 +10,7 @@ A Roam Research plugin that helps you discover more potential connections in you
 
 - **2025-10-21**
   - **Added:** New configuration option to ignore incomplete matches.
+  - **Added:** New configuration option to case insensitive.
   - **Improved:** Matching logic now excludes content within inline code blocks.
   - **Changed:** Relaxed the restriction for the "Preview all" feature; it now activates when there is more than 0 match.
 
