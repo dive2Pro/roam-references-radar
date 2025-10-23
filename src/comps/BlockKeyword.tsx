@@ -1,5 +1,5 @@
 import { Menu, MenuItem, Popover } from "@blueprintjs/core";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
 export function BlockKeyword({
   data,
@@ -15,17 +15,46 @@ export function BlockKeyword({
   // const [content, setContent] = useState<ReactNode[]>([data.text]);
   const [active, setActive] = useState<Keyword>();
   let content: ReactNode[] = [data.text];
+  const [key$, setKey$] = useState(false);
+
   if (active) {
-    content = [<span>{data.text.substring(0,  active.startIndex - data.start )}</span>];
+    content = [
+      <span>{data.text.substring(0, active.startIndex - data.start)}</span>,
+    ];
     content.push(
       <span>
-        <span className="rm-page-ref__brackets">[[</span>
+        <span className="rm-page-ref__brackets">{key$ ? "#" : ""}[[</span>
         <span className="rm-page-ref rm-page-ref--link">{active.keyword}</span>
         <span className="rm-page-ref__brackets">]]</span>
       </span>
     );
-    content.push(<span>{data.text.substring(active.endIndex + 1 - data.start)}</span>);
+    content.push(
+      <span>{data.text.substring(active.endIndex + 1 - data.start)}</span>
+    );
   }
+  //  监听 ctrl 被按下和松开
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      console.log(e.key, ' = e key')
+      if (e.key === "Alt") {
+        setKey$(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Alt") {
+        setKey$(false);
+      }
+    };
+
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+  console.log({ key$ });
   return (
     // @ts-ignore
     <Popover
@@ -40,7 +69,7 @@ export function BlockKeyword({
             {data.keywords.map((keywordItem) => {
               return (
                 <MenuItem
-                  text={`[[${keywordItem.keyword}]]`}
+                  text={`${key$ ? "#" : ""}[[${keywordItem.keyword}]]`}
                   icon="git-new-branch"
                   onMouseEnter={() => {
                     setActive(keywordItem);
@@ -59,8 +88,8 @@ export function BlockKeyword({
                             [?p :block/uid ?e]
                         ]
                         `) as unknown as string;
-            
-                        console.log({ keywordUid })
+
+                      console.log({ keywordUid });
                       if (e.metaKey) {
                         window.roamAlphaAPI.ui.rightSidebar.addWindow({
                           window: {
@@ -77,8 +106,9 @@ export function BlockKeyword({
                         });
                       }
                       e.preventDefault();
-                      return
+                      return;
                     }
+                    e.preventDefault();
                     /**
                      * 1. 更新数据源
                      * 2. 更新当前组件
@@ -86,7 +116,7 @@ export function BlockKeyword({
                      */
                     const newBlockString =
                       blockString.substring(0, keywordItem.startIndex) +
-                      `[[${keywordItem.keyword}]]` +
+                      `${key$ ? "#" : ""}[[${keywordItem.keyword}]]` +
                       blockString.substring(keywordItem.endIndex + 1);
                     window.roamAlphaAPI.data.block.update({
                       block: {
