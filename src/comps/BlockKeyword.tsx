@@ -132,14 +132,14 @@ export function BlockKeyword({
           </Menu>
           <div
             style={{
-              padding: "6px 6px",
+              padding: "0px 6px 6px",
               fontSize: "12px",
               color: "#999",
+              marginTop: -8
             }}
           >
             <sub>
-              shift + click Open in sidebar, cmd + shift + click Open linked
-              references
+              Click+: Alt Prefix '#'; Shift for sidebar; Cmd+Shift for references
             </sub>
           </div>
         </div>
