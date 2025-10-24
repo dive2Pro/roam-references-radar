@@ -147,7 +147,7 @@ export class AhoCorasick {
       "![",
     ];
     const IS_WHITESPACE_REGEX = /\s/;
-    const IS_VALID_TAG_CHAR_REGEX = /[a-zA-Z0-9\p{Script=Han}._-]/u;
+    const IS_VALID_TAG_CHAR_REGEX = /[a-zA-Z0-9\p{Script=Han}._\/-]/u;
     const symmetricFilters = [
       { start: "[[", end: "]]" },
       { start: "((", end: "))" },
