@@ -48,7 +48,7 @@ export class AhoCorasick {
    * @param keywords 要搜索的关键词列表
    * @param caseSensitive 是否区分大小写，默认为 true
    */
-  constructor(keywords: string[], caseSensitive: boolean = true) {
+  constructor(public keywords: string[], caseSensitive: boolean = true) {
     this.root = new AhoCorasickNode();
     this.caseSensitive = caseSensitive;
     const uniqueKeywords = [...new Set(keywords.filter((kw) => kw.length > 0))];

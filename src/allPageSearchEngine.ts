@@ -30,7 +30,7 @@ export const newAhoCorasick = async () => {
       );
     });
   // 检查到页面有更新时， 比如， 新建的或者更新的时间在上次查询之后的？
-  if (AC && lastEditTime <= lastedQueryTime) {
+  if (AC && lastEditTime <= lastedQueryTime && AC.keywords.length === allPages.length) {
     return AC;
   }
   lastedQueryTime = lastEditTime;
