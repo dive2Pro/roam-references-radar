@@ -10,7 +10,7 @@ export const newAhoCorasick = async () => {
   const allPages = (
     (await window.roamAlphaAPI.data.async.fast.q(`
       [
-        :find (pull ?page [:block/uid :node/title])
+        :find (pull ?page [:block/uid :node/title :edit/time])
         :where
           [?page :node/title ?title]
       ]
@@ -26,17 +26,22 @@ export const newAhoCorasick = async () => {
       const title = page[":node/title"];
       lastEditTime = Math.max(lastEditTime, page[":edit/time"]);
       return !ignoreKeywords.some((keyword) =>
-        title.toLowerCase().includes(keyword.toLowerCase())
+        title.toLowerCase().includes(keyword.toLowerCase()),
       );
     });
   // 检查到页面有更新时， 比如， 新建的或者更新的时间在上次查询之后的？
-  if (AC && lastEditTime <= lastedQueryTime && AC.keywords.length === allPages.length) {
+  console.log({ lastEditTime, lastedQueryTime });
+  if (
+    AC &&
+    lastEditTime <= lastedQueryTime &&
+    AC.keywords.length === allPages.length
+  ) {
     return AC;
   }
   lastedQueryTime = lastEditTime;
   const ac = new AhoCorasick(
     allPages.map((page) => page[":node/title"]),
-    getCaseInsensitive()
+    getCaseInsensitive(),
   );
   if (AC) {
     AC = undefined;
